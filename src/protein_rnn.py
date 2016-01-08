@@ -13,7 +13,7 @@ class RNNModel(object):
     def __init__(self, is_training, config):
         self.batch_size = batch_size = config.batch_size
         self.num_steps = num_steps = config.num_steps
-            size = config.hidden_size
+        size = config.hidden_size
         cell = rnn_cell.GRUCell(num_units)
 
 class SmallConfig(object):
@@ -30,3 +30,11 @@ class SmallConfig(object):
     keep_prob = 1.0
     lr_decay = 0.5
     vocab_size = 10000
+
+def main(unused_args):
+    config = SmallConfig()
+    with tf.Graph().as_default(), tf.Session() as session:
+        m = RNNModel(True,config)
+
+if __name__ == "__main__":
+   tf.app.run() 
