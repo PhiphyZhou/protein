@@ -1,0 +1,6 @@
+-------------
+To Do: 
+- run basic rnn on trajectory data
+
+------------
+Done: 
