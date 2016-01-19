@@ -20,16 +20,18 @@ from tensorflow.python.ops.rnn import *
 # tf.flags.DEFINE_string("data_path", None, "data_path")
 # FLAGS = tf.flags.FLAGS
 # 
-class RNNModel(object):
-    ''' The basic rnn model '''
+class LSTMModel(object):
+    ''' The basic SLTM model '''
     def __init__(self, is_training, config):
         self.batch_size = batch_size = config.batch_size # size for mini batch training
         self.num_steps = num_steps = config.num_steps # maximum number of training iteration?
         size = config.hidden_size # state size
         feature_size = config.feature_size
 
-        self._input_data = tf.placeholder(tf.int32, [batch_size, num_steps])
-        self._targets = tf.placeholder(tf.int32, [batch_size, num_steps])
+        self._input_data = tf.placeholder(tf.int32, 
+                [batch_size, num_steps,feature_size])
+        self._targets = tf.placeholder(tf.int32, 
+                [batch_size, num_steps,feature_size])
 
         basic_cell = rnn_cell.BasicLSTMCell(size)
         if is_training and config.keep_prob < 1: # use dropout 
@@ -39,10 +41,9 @@ class RNNModel(object):
                 [basic_cell] * config.num_layers) # multiple layers
         self._initial_state = cell.zero_state(batch_size, tf.float32)
 
-        with tf.device("/cpu:0"):
-            embedding = tf.get_variable("embedding", [feature_size, size])
-            inputs = tf.nn.embedding_lookup(embedding, self._input_data)
-
+        inputs = self._input_data
+        print inputs
+        print "haha"
         if is_training and config.keep_prob < 1:
             inputs = tf.nn.dropout(inputs, config.keep_prob)
 
@@ -61,8 +62,9 @@ class RNNModel(object):
                 outputs.append(cell_output)
                 states.append(state)
 
-       
+        print outputs
         output = tf.reshape(tf.concat(1, outputs), [-1, size])
+        print output
         logits = tf.nn.xw_plus_b(output,
                       tf.get_variable("softmax_w", [size, feature_size]),
                       tf.get_variable("softmax_b", [feature_size]))
@@ -129,14 +131,21 @@ class SmallConfig(object):
     max_max_epoch = 13
     keep_prob = 1.0
     lr_decay = 0.5
-    feature_size = 10000
 
 def main(unused_args):
 #    if not FLAGS.data_path:
 #        raise ValueError("Must set --data_path to PTB data directory")
     config = SmallConfig()
     with tf.Graph().as_default(), tf.Session() as session:
-        m = RNNModel(True,config)
+        raw_data = np.array(datareader.load_data())
+#        print raw_data
+        config.feature_size = len(raw_data[0,0,:])
+#        print config.feature_size
+        initializer = tf.random_uniform_initializer(-config.init_scale,
+                                                    config.init_scale)
+        with tf.variable_scope("model", reuse=None, initializer=initializer):
+            m = LSTMModel(True,config)
+        tf.initialize_all_variables().run()
     print "done"
 
 if __name__ == "__main__":

@@ -11,18 +11,27 @@ import numpy as np
 import pickle, random
 
 # Data file parameters
-num_files = 2 # number of dcd files we want to analyze 
+num_files = 1 # number of dcd files we want to analyze 
 dcd_path = "/protein-data/bpti-all/bpti-all-"
 pdb_file = "/protein-data/bpti-all.pdb"
 window_size = 10 # number of frames to be averaged
 batch_size = 10  # number of sequences in a batch
+num_steps = 3 # number of depth of unroll
 
 def load_data(store_ref=False):
     '''   
     Read trajectory data and preprocess.
+    
+    args:
+    - store_ref
     If store_ref==True(usually for the first time of reading data),
     the reference frame and the coordinate boundaries are stored into disk.
+    
+    returns:
+    - data = [batch_size, sequence_length, 3*atom_number]
+        smoothed, re-referenced and rescaled coordinates
     '''
+    
     dcd_files = []
     for i in xrange(num_files):
         if(i<10):
@@ -82,8 +91,14 @@ def load_data(store_ref=False):
     return data
 
 def split_train_test(data,frac):
-    '''split the whole data set randomly into train and test sets
-       frac: gives the fraction of the train set
+    '''
+    split the whole data set randomly into train and test sets
+    
+    args:
+    - frac = the fraction of the train set
+
+    returns:
+    - train_set, test_set
     '''
     train = []
     test = []
@@ -106,11 +121,46 @@ def split_train_test(data,frac):
             train.append(data[i])
     return train, test
 
+def data_iterator(raw_data,num_steps):
+    """Iterate on the raw data.
+
+    Args:
+    raw_data: one of the raw data outputs from load_data or split_train_test
+    num_steps: int, the number of unrolls, indicating the depth
+            of truncated back propagation.
+
+    Yields:
+    Pairs of the batched data, each a matrix of shape [batch_size, num_steps].
+    The second element of the tuple is the same data time-shifted to the
+    right by one.
+
+    Raises:
+    ValueError: if num_steps are too high.
+    """
+    data = np.array(raw_data, dtype=np.float32)
+    print raw_data
+    print data
+    epoch_size = (data.shape[1] - 1) // num_steps
+    print epoch_size    
+    if epoch_size == 0:
+        raise ValueError("epoch_size == 0, decrease batch_size or num_steps")
+    for i in range(epoch_size):
+        x = data[:, i*num_steps:(i+1)*num_steps]
+        y = data[:, i*num_steps+1:(i+1)*num_steps+1]
+        yield (x, y)
+
+
 if __name__=="__main__":
     data = load_data(True)
     train, test = split_train_test(data,0.7)
-    print len(train),len(test)
+    for step, (x, y) in enumerate(data_iterator(test,num_steps)):
+        print "x: \n", x
+        print "y: \n", y
+#    print len(train),len(test)
 #    print np.amax(data,axis=(0,1,2))
 #    print np.amin(data,axis=(0,1,2))
 #    print data[0]
+
+
+
 
