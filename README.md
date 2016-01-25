@@ -14,6 +14,6 @@ MDAnalysis-0.12.1
 
 Run a docker container from the image built by the Dockerfile: 
 ```
-docker build docker build -t phiphy/protein . 
+docker build -t phiphy/protein . 
 docker run -it --name protein -v /home/bdslss15-xpjs/simple-examples:/simple-examples -v /home/bdslss15-xpjs/protein:/protein -v /damsl/projects/MD/Simulations/bpti:/protein-data phiphy/protein
 ```
