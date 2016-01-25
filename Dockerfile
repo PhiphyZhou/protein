@@ -8,6 +8,7 @@ RUN sudo apt-get install -y python-numpy python-scipy python-matplotlib python-p
 RUN pip install cython
 RUN pip install nose
 RUN pip install mdtraj
+RUN pip install --user MDAnalysis MDAnalysisTests
 
 VOLUME /output
 
