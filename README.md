@@ -12,7 +12,8 @@ scipy-0.13.3
 
 MDAnalysis-0.12.1
 
-Using docker container: 
+Run a docker container from the image built by the Dockerfile: 
 ```
-docker run -it --name protein -v /home/bdslss15-xpjs/simple-examples:/simple-examples -v /home/bdslss15-xpjs/protein:/protein -v /damsl/projects/MD/Simulations/bpti:/protein-data -v /output phiphy/tensorflow-adv
+docker build docker build -t phiphy/protein . 
+docker run -it --name protein -v /home/bdslss15-xpjs/simple-examples:/simple-examples -v /home/bdslss15-xpjs/protein:/protein -v /damsl/projects/MD/Simulations/bpti:/protein-data phiphy/protein
 ```
