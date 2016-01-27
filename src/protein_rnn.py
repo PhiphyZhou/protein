@@ -1,5 +1,7 @@
 '''
-Use rnn to learn features from trajectory data
+Use rnn to predict the next frame using the trajetory sequence
+Adapted from Tensorflow code:
+https://github.com/tensorflow/tensorflow/blob/master/tensorflow/models/rnn/ptb/ptb_word_lm.py
 '''
 
 import tensorflow.python.platform

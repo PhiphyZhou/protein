@@ -1,6 +1,9 @@
 -------------
 To Do: 
-- run basic rnn on trajectory data
+- Basic rnn on trajectory data for predicting the next frame (adapted from Tensorflow ptb model)
+- Use sequence-to-sequence model to learn feature of a singel frame (adpted from Tensorflow translation model) 
 
 ------------
-Done: 
+Done:
+- Set up Docker image using Dockerfile
+- Preprocessed protein data from pdb files, including window smoothing and batch partition
