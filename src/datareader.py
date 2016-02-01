@@ -3,7 +3,6 @@ This module is for preprocessing the DE Shaw BPTI data,ie, to:
 - read in trajectory files and reform the data into desired window structre
 - unify the reference for all frames
 - rescale the coordinates into [-1,1] for feature learning
-- arrange the data into batches and epochs for training
 '''
 
 import mdtraj as md
@@ -15,6 +14,7 @@ num_files = 1 # number of dcd files we want to analyze
 dcd_path = "/protein-data/bpti-all/bpti-all-"
 pdb_file = "/protein-data/bpti-all.pdb"
 window_size = 10 # number of frames to be averaged
+seq_size = 10 # number of averaged frames in a sequence
 batch_size = 10  # number of sequences in a batch
 num_steps = 3 # number of depth of unroll
 
@@ -28,7 +28,7 @@ def load_data(store_ref=False):
     the reference frame and the coordinate boundaries are stored into disk.
     
     returns:
-    - data = [batch_size, sequence_length, 3*atom_number]
+    - data = [num_sequences, sequence_length, 3*atom_number]
         smoothed, re-referenced and rescaled coordinates
     '''
     
@@ -72,7 +72,7 @@ def load_data(store_ref=False):
 
     # make window averages, rescale and break into sequences
     data = []
-    seq_size = len(traj)//window_size//batch_size
+#    seq_size = len(traj)//window_size//batch_size # this is for a long seq
 #    print seq_size
     for i in xrange(0,traj.n_frames,window_size*seq_size):
         coords = []
@@ -138,8 +138,8 @@ def data_iterator(raw_data,num_steps):
     ValueError: if num_steps are too high.
     """
     data = np.array(raw_data, dtype=np.float32)
-    print raw_data
-    print data
+#    print raw_data
+#    print data
     epoch_size = (data.shape[1] - 1) // num_steps
     print epoch_size    
     if epoch_size == 0:
