@@ -63,55 +63,17 @@ import datareader as dr
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(20,20)] # all sequences will be of the same length
+_buckets = [(10,10)] # all sequences will be of the same length
 
 feature_size = 0 # to be decided after reading training data
 hidden_size = 100
 num_layers = 1
 max_gradient_norm = 0.1
-batch_size = 10
+batch_size = 5
 learning_rate = 0.1 
 learning_rate_decay_factor = 0.5
 train_dir = "/output"
 steps_per_checkpoint = 3
-
-def read_data(source_path, target_path, max_size=None):
-    """Read data from source and target files and put into buckets.
-
-    Args:
-        source_path: path to the files with token-ids for the source language.
-        target_path: path to the file with token-ids for the target language;
-            it must be aligned with the source file: n-th line contains the desired
-            output for n-th line from the source_path.
-        max_size: maximum number of lines to read, all other will be ignored;
-            if 0 or None, data files will be read completely (no limit).
-
-    Returns:
-        data_set: a list of length len(_buckets); data_set[n] contains a list of
-            (source, target) pairs read from the provided data files that fit
-            into the n-th bucket, i.e., such that len(source) < _buckets[n][0] and
-            len(target) < _buckets[n][1]; source and target are lists of token-ids.
-    """
-    data_set = [[] for _ in _buckets]
-    with gfile.GFile(source_path, mode="r") as source_file:
-        with gfile.GFile(target_path, mode="r") as target_file:
-            source, target = source_file.readline(), target_file.readline()
-            counter = 0
-            while source and target and (not max_size or counter < max_size):
-                counter += 1
-                if counter % 100000 == 0:
-                    print("  reading data line %d" % counter)
-                    sys.stdout.flush()
-                source_ids = [int(x) for x in source.split()]
-                target_ids = [int(x) for x in target.split()]
-                target_ids.append(data_utils.EOS_ID)
-                for bucket_id, (source_size, target_size) in enumerate(_buckets):
-                    if len(source_ids) < source_size and len(target_ids) < target_size:
-                        data_set[bucket_id].append([source_ids, target_ids])
-                        break
-                source, target = source_file.readline(), target_file.readline()
-    
-    return data_set
 
 
 def create_model(session, forward_only):
@@ -146,7 +108,7 @@ def train():
 
     train_data, test_data =dr.split_train_test(pair_data,0.7)
     train_set = [train_data] # only one bucket
-    print(np.array(train_set).shape)
+#    print(np.array(train_set).shape)
     
     train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
     train_total_size = float(sum(train_bucket_sizes))
@@ -173,14 +135,15 @@ def train():
             # in [0, 1] and use the corresponding interval in train_buckets_scale.
             random_number_01 = np.random.random_sample()
             bucket_id = min([i for i in xrange(len(train_buckets_scale))
-                                             if train_buckets_scale[i] > random_number_01])
+                            if train_buckets_scale[i] > random_number_01])
+#            print(bucket_id)
 
             # Get a batch and make a step.
             start_time = time.time()
             encoder_inputs, decoder_inputs, target_weights = model.get_batch(
                     train_set, bucket_id)
             _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs,
-                                                                     target_weights, bucket_id, False)
+                                         target_weights, bucket_id, False)
             step_time += (time.time() - start_time) / steps_per_checkpoint
             loss += step_loss / steps_per_checkpoint
             current_step += 1
@@ -204,8 +167,8 @@ def train():
                 for bucket_id in xrange(len(_buckets)):
                     encoder_inputs, decoder_inputs, target_weights = model.get_batch(
                             dev_set, bucket_id)
-                    _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs,
-                                                                             target_weights, bucket_id, True)
+                    _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs,  
+                                                 target_weights, bucket_id, True)
                     eval_ppx = math.exp(eval_loss) if eval_loss < 300 else float('inf')
                     print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
                 sys.stdout.flush()

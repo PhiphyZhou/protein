@@ -1,9 +1,13 @@
 -------------
-To Do: 
-- Basic rnn on trajectory data for predicting the next frame (adapted from Tensorflow ptb model)
-- Use sequence-to-sequence model to learn feature of a singel frame (adpted from Tensorflow translation model) 
-
+To Do(*): 
+* Basic rnn on trajectory data for predicting the next frame (adapted from Tensorflow ptb model)
+* Use sequence-to-sequence model to learn feature of a singel frame (adpted from Tensorflow translation model) 
+    * encoder-decoder.train
+      line 145. Need to redefine loss function in seq2seq_model
+    - encoder-decoder.create_model
+    - seq2seq_model.get_batch
+    * seq2seq_model.step
 ------------
-Done:
+Done(-):
 - Set up Docker image using Dockerfile
-- Preprocessed protein data from pdb files, including window smoothing and batch partition
+- datareader: Preprocessed protein data from pdb files, including window smoothing and batch partition
