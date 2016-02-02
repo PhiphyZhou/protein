@@ -71,6 +71,7 @@ class Seq2SeqModel(object):
         self.global_step = tf.Variable(0, trainable=False)
 
         # Loss function - square loss
+        
 
         # If we use sampled softmax, we need an output projection.
         output_projection = None
@@ -88,7 +89,7 @@ class Seq2SeqModel(object):
                 with tf.device("/cpu:0"):
                     labels = tf.reshape(labels, [-1, 1])
                     return tf.nn.sampled_softmax_loss(w_t, b, inputs, labels, num_samples,
-                                                                                        self.target_vocab_size)
+                                                      self.target_vocab_size)
             softmax_loss_function = sampled_loss
 
         # Create the internal multi-layer cell for our RNN.
@@ -112,12 +113,12 @@ class Seq2SeqModel(object):
         self.target_weights = []
         for i in xrange(buckets[-1][0]):    # Last bucket is the biggest one.
             self.encoder_inputs.append(tf.placeholder(tf.int32, shape=[None],
-                                                                                                name="encoder{0}".format(i)))
+                                                    name="encoder{0}".format(i)))
         for i in xrange(buckets[-1][1] + 1):
             self.decoder_inputs.append(tf.placeholder(tf.int32, shape=[None],
-                                                                                                name="decoder{0}".format(i)))
+                                                    name="decoder{0}".format(i)))
             self.target_weights.append(tf.placeholder(tf.float32, shape=[None],
-                                                                                                name="weight{0}".format(i)))
+                                                     name="weight{0}".format(i)))
 
         # Our targets are decoder inputs shifted by one.
         targets = [self.decoder_inputs[i + 1]
@@ -134,8 +135,8 @@ class Seq2SeqModel(object):
             if output_projection is not None:
                 for b in xrange(len(buckets)):
                     self.outputs[b] = [tf.nn.xw_plus_b(output, output_projection[0],
-                                                                                         output_projection[1])
-                                                         for output in self.outputs[b]]
+                                                       output_projection[1])
+                                       for output in self.outputs[b]]
         else:
             self.outputs, self.losses = seq2seq.model_with_buckets(
                     self.encoder_inputs, self.decoder_inputs, targets,
@@ -152,12 +153,13 @@ class Seq2SeqModel(object):
             for b in xrange(len(buckets)):
                 gradients = tf.gradients(self.losses[b], params)
                 clipped_gradients, norm = tf.clip_by_global_norm(gradients,
-                                                                                                                 max_gradient_norm)
+                                                                 max_gradient_norm)
                 self.gradient_norms.append(norm)
                 self.updates.append(opt.apply_gradients(
                         zip(clipped_gradients, params), global_step=self.global_step))
 
         self.saver = tf.train.Saver(tf.all_variables())
+
 
     def step(self, session, encoder_inputs, decoder_inputs, target_weights,
                      bucket_id, forward_only):
@@ -200,8 +202,8 @@ class Seq2SeqModel(object):
             input_feed[self.target_weights[l].name] = target_weights[l]
 
         # Since our targets are decoder inputs shifted by one, we need one more.
-        last_target = self.decoder_inputs[decoder_size].name
-        input_feed[last_target] = np.zeros([self.batch_size], dtype=np.int32)
+#        last_target = self.decoder_inputs[decoder_size].name
+#        input_feed[last_target] = np.zeros([self.batch_size], dtype=np.int32)
 
         # Output feed: depends on whether we do a backward step or not.
         if not forward_only:
@@ -218,6 +220,7 @@ class Seq2SeqModel(object):
             return outputs[1], outputs[2], None  # Gradient norm, loss, no outputs.
         else:
             return None, outputs[0], outputs[1:]    # No gradient norm, loss, outputs.
+
 
     def get_batch(self, data, bucket_id):
         """Get a random batch of data from the specified bucket, prepare for step.
