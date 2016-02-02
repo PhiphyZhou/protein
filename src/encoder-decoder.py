@@ -142,6 +142,7 @@ def train():
             start_time = time.time()
             encoder_inputs, decoder_inputs, target_weights = model.get_batch(
                     train_set, bucket_id)
+#            print(len(encoder_inputs))
             _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs,
                                          target_weights, bucket_id, False)
             step_time += (time.time() - start_time) / steps_per_checkpoint
@@ -221,20 +222,24 @@ def self_test():
     with tf.Session() as sess:
         print("Self-test for neural translation model.")
         # Create model with vocabularies of 10, 2 small buckets, 2 layers of 32.
-        model = seq2seq_model.Seq2SeqModel(10, 10, [(3, 3), (6, 6)], 32, 2,
-                                                                             5.0, 32, 0.3, 0.99, num_samples=8)
+        model = seq2seq_model.Seq2SeqModel(10, 10, [(3, 3)], 32, 2,
+                                           5.0, 5, 0.3, 0.99, num_samples=8)
         sess.run(tf.initialize_all_variables())
 
         # Fake data set for both the (3, 3) and (6, 6) bucket.
-        data_set = ([([1, 1], [2, 2]), ([3, 3], [4]), ([5], [6])],
-                                [([1, 1, 1, 1, 1], [2, 2, 2, 2, 2]), ([3, 3, 3], [5, 6])])
+        data_set = ([([1,1,1], [1,1,1]), ([3,2,3], [3,2,3]), ([5,4,4], [5,4,4])],)
+
         for _ in xrange(5):  # Train the fake model for 5 steps.
-            bucket_id = random.choice([0, 1])
+#            bucket_id = random.choice([0, 1])
+            bucket_id = 0
+#            print(data_set[0])
             encoder_inputs, decoder_inputs, target_weights = model.get_batch(
                     data_set, bucket_id)
-            model.step(sess, encoder_inputs, decoder_inputs, target_weights,
+#            print(encoder_inputs)
+            output1,output2,_ =  model.step(sess, encoder_inputs, decoder_inputs, target_weights,
                                  bucket_id, False)
-
+            print(output1)
+            print(output2)
 
 def main(_):
 #       if FLAGS.self_test:
@@ -243,7 +248,8 @@ def main(_):
 #           decode()
 #       else:
 #           train()
-        train()
+#        train()
+        self_test()
 
 if __name__ == "__main__":
     tf.app.run()

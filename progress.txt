@@ -4,11 +4,12 @@ To Do(*):
 * Use sequence-to-sequence model to learn feature of a singel frame (adpted from Tensorflow translation model) 
     * encoder-decoder.train: done before line 145
     * seq2seq_model.init
-      Need to redefine loss function in seq2seq_model
-      (Need to rewrite model_with_buckets using a different loss function?)
+      * redefine loss function in seq2seq_model
+      * rewrite model_with_buckets using a different loss function
+      * Use high-dim self-test data to test new loss function 
     - encoder-decoder.create_model
     - seq2seq_model.get_batch
-    * seq2seq_model.step
+    - seq2seq_model.step
 ------------
 Done(-):
 - Set up Docker image using Dockerfile

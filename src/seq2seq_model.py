@@ -71,7 +71,10 @@ class Seq2SeqModel(object):
         self.global_step = tf.Variable(0, trainable=False)
 
         # Loss function - square loss
-        
+        def square_loss(inputs, targets):
+            with tf.device("/cpu:0"):
+                l2 = np.sum((inputs-targets)**2)
+                return l2
 
         # If we use sampled softmax, we need an output projection.
         output_projection = None
@@ -114,15 +117,20 @@ class Seq2SeqModel(object):
         for i in xrange(buckets[-1][0]):    # Last bucket is the biggest one.
             self.encoder_inputs.append(tf.placeholder(tf.int32, shape=[None],
                                                     name="encoder{0}".format(i)))
-        for i in xrange(buckets[-1][1] + 1):
+        # changed from Tensorflow: do not increase decoder size by 1
+#        for i in xrange(buckets[-1][1] + 1):
+        for i in xrange(buckets[-1][1]):
             self.decoder_inputs.append(tf.placeholder(tf.int32, shape=[None],
                                                     name="decoder{0}".format(i)))
             self.target_weights.append(tf.placeholder(tf.float32, shape=[None],
                                                      name="weight{0}".format(i)))
 
         # Our targets are decoder inputs shifted by one.
-        targets = [self.decoder_inputs[i + 1]
-                             for i in xrange(len(self.decoder_inputs) - 1)]
+#        targets = [self.decoder_inputs[i + 1]
+#                             for i in xrange(len(self.decoder_inputs) - 1)]
+        # modified: targets are not shifted
+        targets = [self.decoder_inputs[i]
+                             for i in xrange(len(self.decoder_inputs))]
 
         # Training outputs and losses.
         if forward_only:
@@ -200,6 +208,8 @@ class Seq2SeqModel(object):
         for l in xrange(decoder_size):
             input_feed[self.decoder_inputs[l].name] = decoder_inputs[l]
             input_feed[self.target_weights[l].name] = target_weights[l]
+#        print(input_feed.keys())
+#        print(input_feed['encoder0:0'])
 
         # Since our targets are decoder inputs shifted by one, we need one more.
 #        last_target = self.decoder_inputs[decoder_size].name
@@ -208,8 +218,8 @@ class Seq2SeqModel(object):
         # Output feed: depends on whether we do a backward step or not.
         if not forward_only:
             output_feed = [self.updates[bucket_id],  # Update Op that does SGD.
-                                         self.gradient_norms[bucket_id],    # Gradient norm.
-                                         self.losses[bucket_id]]    # Loss for this batch.
+                           self.gradient_norms[bucket_id],    # Gradient norm.
+                           self.losses[bucket_id]]    # Loss for this batch.
         else:
             output_feed = [self.losses[bucket_id]]  # Loss for this batch.
             for l in xrange(decoder_size):  # Output logits.
@@ -237,6 +247,7 @@ class Seq2SeqModel(object):
         Returns:
             The triple (encoder_inputs, decoder_inputs, target_weights) for
             the constructed batch that has the proper format to call step(...) later.
+            shape: encoder_input[seq_length,batch_size,feature_size]
         """
         encoder_size, decoder_size = self.buckets[bucket_id]
         encoder_inputs, decoder_inputs = [], []
@@ -248,8 +259,15 @@ class Seq2SeqModel(object):
             decoder_inputs.append(decoder_input)
 
         # Now we create batch-major vectors from the data selected above.
+        # Different from Tensorflow code: here we assume all sequences are
+        # of the same length and we don't do padding
         batch_encoder_inputs, batch_decoder_inputs, batch_weights = [], [], []
-
+#        print(self.batch_size)
+#        print(len(encoder_inputs))
+#        print(encoder_size)
+#        print(len(encoder_inputs[0]))
+#        print(encoder_inputs)
+#
         # Batch encoder inputs are just re-indexed encoder_inputs.
         for length_idx in xrange(encoder_size):
             batch_encoder_inputs.append(
@@ -272,3 +290,20 @@ class Seq2SeqModel(object):
 #                    batch_weight[batch_idx] = 0.0
             batch_weights.append(batch_weight)
         return batch_encoder_inputs, batch_decoder_inputs, batch_weights
+
+
+    def model_with_buckets():
+    ''' A function similar to seq2seq.model_with_buckets,but using square loss
+        instead of softmax '''
+
+
+
+
+
+
+
+
+
+
+
+
