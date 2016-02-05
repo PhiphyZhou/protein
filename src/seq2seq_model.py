@@ -35,15 +35,14 @@ class Seq2SeqModel(object):
         http://arxiv.org/pdf/1412.2007v2.pdf
     """
 
-    def __init__(self, source_vocab_size, target_vocab_size, buckets, size,
+    def __init__(self, feature_size, buckets, size,
                              num_layers, max_gradient_norm, batch_size, learning_rate,
                              learning_rate_decay_factor, use_lstm=False,
                              num_samples=512, forward_only=False):
         """Create the model.
 
         Args:
-            source_vocab_size: size of the source vocabulary.
-            target_vocab_size: size of the target vocabulary.
+            feature_size: size of the raw data feature.
             buckets: a list of pairs (I, O), where I specifies maximum input length
                 that will be processed in that bucket, and O specifies maximum output
                 length. Training instances that have inputs longer than I or outputs
@@ -61,8 +60,7 @@ class Seq2SeqModel(object):
             num_samples: number of samples for sampled softmax.
             forward_only: if set, we do not construct the backward pass in the model.
         """
-        self.source_vocab_size = source_vocab_size
-        self.target_vocab_size = target_vocab_size
+        self.feature_size = feature_size
         self.buckets = buckets
         self.batch_size = batch_size
         self.learning_rate = tf.Variable(float(learning_rate), trainable=False)
@@ -75,26 +73,28 @@ class Seq2SeqModel(object):
             with tf.device("/cpu:0"):
                 l2 = np.sum((inputs-targets)**2)
                 return l2
+        square_loss_function = square_loss
 
-        # If we use sampled softmax, we need an output projection.
-        output_projection = None
-        softmax_loss_function = None
-        # Sampled softmax only makes sense if we sample less than vocabulary size.
-        if num_samples > 0 and num_samples < self.target_vocab_size:
-            with tf.device("/cpu:0"):
-                w = tf.get_variable("proj_w", [size, self.target_vocab_size])
-                w_t = tf.transpose(w)
-                b = tf.get_variable("proj_b", [self.target_vocab_size])
-            output_projection = (w, b)
-
-
-            def sampled_loss(inputs, labels):
-                with tf.device("/cpu:0"):
-                    labels = tf.reshape(labels, [-1, 1])
-                    return tf.nn.sampled_softmax_loss(w_t, b, inputs, labels, num_samples,
-                                                      self.target_vocab_size)
-            softmax_loss_function = sampled_loss
-
+#        # If we use sampled softmax, we need an output projection.
+#        output_projection = None
+#        softmax_loss_function = None
+#        # Sampled softmax only makes sense if we sample less than vocabulary size.
+#        if num_samples > 0 and num_samples < self.target_vocab_size:
+#            with tf.device("/cpu:0"):
+#                w = tf.get_variable("proj_w", [size, self.target_vocab_size])
+#                w_t = tf.transpose(w)
+#                b = tf.get_variable("proj_b", [self.target_vocab_size])
+#            output_projection = (w, b)
+#
+#
+#            def sampled_loss(inputs, labels):
+#                with tf.device("/cpu:0"):
+#                    labels = tf.reshape(labels, [-1, 1])
+#                    return tf.nn.sampled_softmax_loss(w_t, b, inputs, labels, num_samples,
+#                                                      self.target_vocab_size)
+#            softmax_loss_function = sampled_loss
+#
+        
         # Create the internal multi-layer cell for our RNN.
         single_cell = rnn_cell.GRUCell(size)
         if use_lstm:
@@ -104,25 +104,29 @@ class Seq2SeqModel(object):
             cell = rnn_cell.MultiRNNCell([single_cell] * num_layers)
 
         # The seq2seq function: we use embedding for the input and attention.
+#        def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
+#            return seq2seq.embedding_attention_seq2seq(
+#                    encoder_inputs, decoder_inputs, cell, source_vocab_size,
+#                    target_vocab_size, output_projection=output_projection,
+#                    feed_previous=do_decode)
+#        
         def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
-            return seq2seq.embedding_attention_seq2seq(
-                    encoder_inputs, decoder_inputs, cell, source_vocab_size,
-                    target_vocab_size, output_projection=output_projection,
-                    feed_previous=do_decode)
-
+            return seq2seq.basic_rnn_seq2seq(
+                   encoder_inputs, decoder_inputs, cell)
+        
         # Feeds for inputs.
         self.encoder_inputs = []
         self.decoder_inputs = []
         self.target_weights = []
         for i in xrange(buckets[-1][0]):    # Last bucket is the biggest one.
-            self.encoder_inputs.append(tf.placeholder(tf.int32, shape=[None],
+            self.encoder_inputs.append(tf.placeholder(tf.float32, shape=[None,None],
                                                     name="encoder{0}".format(i)))
         # changed from Tensorflow: do not increase decoder size by 1
 #        for i in xrange(buckets[-1][1] + 1):
         for i in xrange(buckets[-1][1]):
-            self.decoder_inputs.append(tf.placeholder(tf.int32, shape=[None],
+            self.decoder_inputs.append(tf.placeholder(tf.float32, shape=[None,None],
                                                     name="decoder{0}".format(i)))
-            self.target_weights.append(tf.placeholder(tf.float32, shape=[None],
+            self.target_weights.append(tf.placeholder(tf.float32, shape=[None,None],
                                                      name="weight{0}".format(i)))
 
         # Our targets are decoder inputs shifted by one.
@@ -292,9 +296,10 @@ class Seq2SeqModel(object):
         return batch_encoder_inputs, batch_decoder_inputs, batch_weights
 
 
-    def model_with_buckets():
+#    def model_with_buckets():
     ''' A function similar to seq2seq.model_with_buckets,but using square loss
         instead of softmax '''
+
 
 
 

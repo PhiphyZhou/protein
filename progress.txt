@@ -7,6 +7,9 @@ To Do(*):
       * redefine loss function in seq2seq_model
       * rewrite model_with_buckets using a different loss function
       * Use high-dim self-test data to test new loss function 
+    - seq2seq.embedding_attention_seq2seq: used to define seq2seq_f()
+      No need. Can use seq2seq.basic_rnn_seq2seq
+    * seq2seq.model_with_buckets: training model, loss function goes into here
     - encoder-decoder.create_model
     - seq2seq_model.get_batch
     - seq2seq_model.step
