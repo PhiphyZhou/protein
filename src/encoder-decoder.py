@@ -222,15 +222,20 @@ def self_test():
     with tf.Session() as sess:
         print("Self-test for neural translation model.")
         # Create model with vocabularies of 10, 2 small buckets, 2 layers of 32.
-        model = seq2seq_model.Seq2SeqModel(3, [(3, 3)], 32, 2,
-                                           5.0, 5, 0.3, 0.99, num_samples=8)
+        # args: (feature_size, buckets, hidden_size,
+        #       num_layers, max_gradient_norm, batch_size, learning_rate,
+        #       learning_rate_decay_factor, use_lstm=False,
+        #       num_samples=512, forward_only=False):
+        model = seq2seq_model.Seq2SeqModel(2, [(3, 3)], 32, 1,
+                                           5.0, 5, 0.3, 0.99)
+        print("model created")
         sess.run(tf.initialize_all_variables())
+        print("model initialized")
 
         # Fake data set for both the (3, 3) and (6, 6) bucket.
-        data_set =([([[1.0,2.0,3.1],[1.3,2.4,4.6],[1.0,3.3,5.5]],
-                        [[1.0,2.0,3.1],[1.3,2.4,4.6],[1.0,3.3,5.5]]),
-                     ([[3,2,3],[4,6,8],[2,4,5]],[[3,2,3],[4,6,8],[2,4,5]]),
-                     ([[5,4,4],[6,7,9],[1,3,6]],[[5,4,4],[6,7,9],[1,3,6]])],)
+        data_set =([([[1.0,2.0],[1.3,2.4],[1.0,3.3]],[[1.0,2.0],[1.3,2.4],[1.0,3.3]]),
+                     ([[3,2],[4,6],[2,4]],[[3,2],[4,6],[2,4]]),
+                     ([[5,4],[6,7],[1,3]],[[5,4],[6,7],[1,3]])],)
 
         for _ in xrange(5):  # Train the fake model for 5 steps.
 #            bucket_id = random.choice([0, 1])
@@ -238,7 +243,12 @@ def self_test():
 #            print(data_set[0])
             encoder_inputs, decoder_inputs, target_weights = model.get_batch(
                     data_set, bucket_id)
-#            print(encoder_inputs)
+            print("encoder_inputs:")
+            print(encoder_inputs)
+            print("decoder_inputs:")
+            print(decoder_inputs)
+            print("weights")
+            print(target_weights)
             output1,output2,_ =  model.step(sess, encoder_inputs, decoder_inputs, target_weights,
                                  bucket_id, False)
             print(output1)

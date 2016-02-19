@@ -16,6 +16,8 @@ import tensorflow as tf
 
 from tensorflow.models.rnn import rnn_cell
 from tensorflow.models.rnn import seq2seq
+from tensorflow.python.framework import ops
+from tensorflow.python.ops import variable_scope as vs
 
 import data_utils
 
@@ -38,7 +40,7 @@ class Seq2SeqModel(object):
     def __init__(self, feature_size, buckets, size,
                              num_layers, max_gradient_norm, batch_size, learning_rate,
                              learning_rate_decay_factor, use_lstm=False,
-                             num_samples=512, forward_only=False):
+                             forward_only=False):
         """Create the model.
 
         Args:
@@ -57,7 +59,6 @@ class Seq2SeqModel(object):
             learning_rate: learning rate to start with.
             learning_rate_decay_factor: decay learning rate by this much when needed.
             use_lstm: if true, we use LSTM cells instead of GRU cells.
-            num_samples: number of samples for sampled softmax.
             forward_only: if set, we do not construct the backward pass in the model.
         """
         self.feature_size = feature_size
@@ -110,7 +111,7 @@ class Seq2SeqModel(object):
 #                    target_vocab_size, output_projection=output_projection,
 #                    feed_previous=do_decode)
 #        
-        def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
+        def seq2seq_f(encoder_inputs, decoder_inputs):
             return seq2seq.basic_rnn_seq2seq(
                    encoder_inputs, decoder_inputs, cell)
         
@@ -119,43 +120,49 @@ class Seq2SeqModel(object):
         self.decoder_inputs = []
         self.target_weights = []
         for i in xrange(buckets[-1][0]):    # Last bucket is the biggest one.
-            self.encoder_inputs.append(tf.placeholder(tf.float32, shape=[None,None],
+            self.encoder_inputs.append(tf.placeholder(tf.float32, shape=[None],
                                                     name="encoder{0}".format(i)))
         # changed from Tensorflow: do not increase decoder size by 1
 #        for i in xrange(buckets[-1][1] + 1):
         for i in xrange(buckets[-1][1]):
-            self.decoder_inputs.append(tf.placeholder(tf.float32, shape=[None,None],
+            self.decoder_inputs.append(tf.placeholder(tf.float32, shape=[None],
                                                     name="decoder{0}".format(i)))
-            self.target_weights.append(tf.placeholder(tf.float32, shape=[None,None],
+            self.target_weights.append(tf.placeholder(tf.float32, shape=[None],
                                                      name="weight{0}".format(i)))
 
         # Our targets are decoder inputs shifted by one.
 #        targets = [self.decoder_inputs[i + 1]
 #                             for i in xrange(len(self.decoder_inputs) - 1)]
         # modified: targets are not shifted
-        targets = [self.decoder_inputs[i]
-                             for i in xrange(len(self.decoder_inputs))]
+        targets = self.decoder_inputs
 
         # Training outputs and losses.
-        if forward_only:
-            self.outputs, self.losses = seq2seq.model_with_buckets(
+        self.outputs, self.losses = model_with_buckets(
                     self.encoder_inputs, self.decoder_inputs, targets,
-                    self.target_weights, buckets, self.target_vocab_size,
-                    lambda x, y: seq2seq_f(x, y, True),
-                    softmax_loss_function=softmax_loss_function)
-            # If we use output projection, we need to project outputs for decoding.
-            if output_projection is not None:
-                for b in xrange(len(buckets)):
-                    self.outputs[b] = [tf.nn.xw_plus_b(output, output_projection[0],
-                                                       output_projection[1])
-                                       for output in self.outputs[b]]
-        else:
-            self.outputs, self.losses = seq2seq.model_with_buckets(
-                    self.encoder_inputs, self.decoder_inputs, targets,
-                    self.target_weights, buckets, self.target_vocab_size,
-                    lambda x, y: seq2seq_f(x, y, False),
-                    softmax_loss_function=softmax_loss_function)
+                    self.target_weights, buckets, self.feature_size,
+                    lambda x, y: seq2seq_f(x, y),
+                    loss_function=square_loss_function)
 
+
+#        if forward_only:
+#            self.outputs, self.losses = seq2seq.model_with_buckets(
+#                    self.encoder_inputs, self.decoder_inputs, targets,
+#                    self.target_weights, buckets, self.target_vocab_size,
+#                    lambda x, y: seq2seq_f(x, y, True),
+#                    softmax_loss_function=softmax_loss_function)
+#            # If we use output projection, we need to project outputs for decoding.
+#            if output_projection is not None:
+#                for b in xrange(len(buckets)):
+#                    self.outputs[b] = [tf.nn.xw_plus_b(output, output_projection[0],
+#                                                       output_projection[1])
+#                                       for output in self.outputs[b]]
+#        else:
+#            self.outputs, self.losses = seq2seq.model_with_buckets(
+#                    self.encoder_inputs, self.decoder_inputs, targets,
+#                    self.target_weights, buckets, self.target_vocab_size,
+#                    lambda x, y: seq2seq_f(x, y, False),
+#                    softmax_loss_function=softmax_loss_function)
+#
         # Gradients and SGD update operation for training the model.
         params = tf.trainable_variables()
         if not forward_only:
@@ -296,10 +303,76 @@ class Seq2SeqModel(object):
         return batch_encoder_inputs, batch_decoder_inputs, batch_weights
 
 
-#    def model_with_buckets():
-    ''' A function similar to seq2seq.model_with_buckets,but using square loss
-        instead of softmax '''
+def model_with_buckets(encoder_inputs, decoder_inputs, targets, weights,
+                        buckets, feature_size, seq2seq,
+                        loss_function=None, name=None):
+    """ 
+    A function similar to seq2seq.model_with_buckets,but using square loss
+        instead of softmax 
 
+    Create a sequence-to-sequence model with support for bucketing.
+
+    The seq2seq argument is a function that defines a sequence-to-sequence model,
+    e.g., seq2seq = lambda x, y: basic_rnn_seq2seq(x, y, rnn_cell.GRUCell(24))
+
+    Args:
+    encoder_inputs: a list of Tensors to feed the encoder; first seq2seq input.
+    decoder_inputs: a list of Tensors to feed the decoder; second seq2seq input.
+    targets: a list of 2D batch-sized*feature_size float32 Tensors (desired output sequence).
+    weights: list of 2D batch-sized*feature_size float32 Tensors to weight the targets.
+    buckets: a list of pairs of (input size, output size) for each bucket.
+    feature_size: integer, dimension of output.
+    seq2seq: a sequence-to-sequence model function; it takes 2 input that
+      agree with encoder_inputs and decoder_inputs, and returns a pair
+      consisting of outputs and states (as, e.g., basic_rnn_seq2seq).
+    loss_function: function (inputs-batch, labels-batch) -> loss-batch
+      to be used instead of the standard softmax (the default if this is None).
+    name: optional name for this operation, defaults to "model_with_buckets".
+
+    Returns:
+    outputs: The outputs for each bucket. Its j'th element consists of a list
+      of 2D Tensors of shape [batch_size x feature_size] (j'th outputs).
+    losses: List of scalar Tensors, representing losses for each bucket.
+    Raises:
+    ValueError: if length of encoder_inputsut, targets, or weights is smaller
+      than the largest (last) bucket.
+    """
+    if len(encoder_inputs) < buckets[-1][0]:
+        raise ValueError("Length of encoder_inputs (%d) must be at least that of la"
+                     "st bucket (%d)." % (len(encoder_inputs), buckets[-1][0]))
+    if len(targets) < buckets[-1][1]:
+        raise ValueError("Length of targets (%d) must be at least that of last"
+                     "bucket (%d)." % (len(targets), buckets[-1][1]))
+    if len(weights) < buckets[-1][1]:
+        raise ValueError("Length of weights (%d) must be at least that of last"
+                     "bucket (%d)." % (len(weights), buckets[-1][1]))
+
+    print(np.shape(encoder_inputs))
+    print(encoder_inputs)
+    all_inputs = encoder_inputs + decoder_inputs + targets + weights
+    losses = []
+    outputs = []
+    with ops.op_scope(all_inputs, name, "model_with_buckets"):
+        for j in xrange(len(buckets)):
+            with vs.variable_scope(vs.get_variable_scope(),
+                             reuse=True if j > 0 else None):
+                bucket_encoder_inputs = [encoder_inputs[i]
+                                     for i in xrange(buckets[j][0])]
+                bucket_decoder_inputs = [decoder_inputs[i]
+                                     for i in xrange(buckets[j][1])]
+                bucket_outputs, _ = seq2seq(bucket_encoder_inputs,
+                                        bucket_decoder_inputs)
+                outputs.append(bucket_outputs)
+
+                bucket_targets = [targets[i] for i in xrange(buckets[j][1])]
+                bucket_weights = [weights[i] for i in xrange(buckets[j][1])]
+                loss = loss_function(bucket_weights,bucket_targets)
+                losses.append(loss)
+    #           losses.append(sequence_loss(
+    #            outputs[-1], bucket_targets, bucket_weights, num_decoder_symbols,
+    #            softmax_loss_function=softmax_loss_function))
+    #
+    return outputs, losses
 
 
 
