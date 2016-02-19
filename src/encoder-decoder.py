@@ -221,7 +221,6 @@ def self_test():
     """Test the translation model."""
     with tf.Session() as sess:
         print("Self-test for neural translation model.")
-        # Create model with vocabularies of 10, 2 small buckets, 2 layers of 32.
         # args: (feature_size, buckets, hidden_size,
         #       num_layers, max_gradient_norm, batch_size, learning_rate,
         #       learning_rate_decay_factor, use_lstm=False,

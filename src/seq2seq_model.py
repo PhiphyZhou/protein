@@ -120,21 +120,20 @@ class Seq2SeqModel(object):
         self.decoder_inputs = []
         self.target_weights = []
         for i in xrange(buckets[-1][0]):    # Last bucket is the biggest one.
-            self.encoder_inputs.append(tf.placeholder(tf.float32, shape=[None],
+            self.encoder_inputs.append(tf.placeholder(tf.float32, shape=[None,self.feature_size],
                                                     name="encoder{0}".format(i)))
+
         # changed from Tensorflow: do not increase decoder size by 1
-#        for i in xrange(buckets[-1][1] + 1):
-        for i in xrange(buckets[-1][1]):
-            self.decoder_inputs.append(tf.placeholder(tf.float32, shape=[None],
+        for i in xrange(buckets[-1][1] + 1):
+#        for i in xrange(buckets[-1][1]):
+            self.decoder_inputs.append(tf.placeholder(tf.float32, shape=[None,self.feature_size],
                                                     name="decoder{0}".format(i)))
             self.target_weights.append(tf.placeholder(tf.float32, shape=[None],
                                                      name="weight{0}".format(i)))
 
         # Our targets are decoder inputs shifted by one.
-#        targets = [self.decoder_inputs[i + 1]
-#                             for i in xrange(len(self.decoder_inputs) - 1)]
-        # modified: targets are not shifted
-        targets = self.decoder_inputs
+        targets = [self.decoder_inputs[i + 1]
+                             for i in xrange(len(self.decoder_inputs) - 1)]
 
         # Training outputs and losses.
         self.outputs, self.losses = model_with_buckets(
