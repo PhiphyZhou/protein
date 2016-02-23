@@ -236,18 +236,15 @@ def self_test():
                      ([[3,2],[4,6],[2,4]],[[3,2],[4,6],[2,4]]),
                      ([[5,4],[6,7],[1,3]],[[5,4],[6,7],[1,3]])],)
 
-        for _ in xrange(5):  # Train the fake model for 5 steps.
+        for i in xrange(5):  # Train the fake model for 5 steps.
+            print("Training iteration %d" % i)
 #            bucket_id = random.choice([0, 1])
             bucket_id = 0
 #            print(data_set[0])
             encoder_inputs, decoder_inputs, target_weights = model.get_batch(
                     data_set, bucket_id)
-            print("encoder_inputs:")
-            print(encoder_inputs)
-            print("decoder_inputs:")
-            print(decoder_inputs)
-            print("weights")
-            print(target_weights)
+            print("get batches done")
+
             output1,output2,_ =  model.step(sess, encoder_inputs, decoder_inputs, target_weights,
                                  bucket_id, False)
             print(output1)

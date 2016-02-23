@@ -70,10 +70,23 @@ class Seq2SeqModel(object):
         self.global_step = tf.Variable(0, trainable=False)
 
         # Loss function - square loss
-        def square_loss(inputs, targets):
+        # The shape of the inputs is a list of tensors: 
+        #   [sequence_len, tensor(batch_size,feature_size)]
+        def square_loss(outputs, targets):
+            if len(outputs) != len(targets):
+                raise ValueError("Outputs length must be equal to the targets length,"
+                                             " %d != %d." % (len(outputs), len(targets))) 
             with tf.device("/cpu:0"):
-                l2 = np.sum((inputs-targets)**2)
-                return l2
+                frame_loss = [] # list of batch losses of single frames
+                for i in xrange(len(outputs)):
+                    a = tf.sub(outputs[i],targets[i])
+                    b = tf.mul(a,a)
+                    c = tf.reduce_sum(b,1)
+                    frame_loss.append(c)
+                frame_loss = tf.pack(frame_loss)
+                # average over the whole sequence to get the batch losses
+                batch_loss = tf.reduce_mean(frame_loss,0)
+                return batch_loss
         square_loss_function = square_loss
 
 #        # If we use sampled softmax, we need an output projection.
@@ -104,6 +117,10 @@ class Seq2SeqModel(object):
         if num_layers > 1:
             cell = rnn_cell.MultiRNNCell([single_cell] * num_layers)
 
+        # project the output so that it has the same dimension as the target vector.
+        # In this way the encoder output is also projected but it doesn't matter.
+        cell = rnn_cell.OutputProjectionWrapper(cell, feature_size)
+       
         # The seq2seq function: we use embedding for the input and attention.
 #        def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
 #            return seq2seq.embedding_attention_seq2seq(
@@ -291,6 +308,7 @@ class Seq2SeqModel(object):
                                         for batch_idx in xrange(self.batch_size)]))
 
             batch_weight = np.ones(self.batch_size, dtype=np.float32)
+            # Note: weights not correctly set or used for our protein model. 
 #            for batch_idx in xrange(self.batch_size):
 #                # We set weight to 0 if the corresponding target is a PAD symbol.
 #                # The corresponding target is decoder_input shifted by 1 forward.
@@ -303,7 +321,7 @@ class Seq2SeqModel(object):
 
 
 def model_with_buckets(encoder_inputs, decoder_inputs, targets, weights,
-                        buckets, feature_size, seq2seq,
+                        buckets, feature_size, seq2seq_func,
                         loss_function=None, name=None):
     """ 
     A function similar to seq2seq.model_with_buckets,but using square loss
@@ -311,8 +329,8 @@ def model_with_buckets(encoder_inputs, decoder_inputs, targets, weights,
 
     Create a sequence-to-sequence model with support for bucketing.
 
-    The seq2seq argument is a function that defines a sequence-to-sequence model,
-    e.g., seq2seq = lambda x, y: basic_rnn_seq2seq(x, y, rnn_cell.GRUCell(24))
+    The seq2seq_func argument is a function that defines a sequence-to-sequence model,
+    e.g., seq2seq_func = lambda x, y: basic_rnn_seq2seq(x, y, rnn_cell.GRUCell(24))
 
     Args:
     encoder_inputs: a list of Tensors to feed the encoder; first seq2seq input.
@@ -321,7 +339,7 @@ def model_with_buckets(encoder_inputs, decoder_inputs, targets, weights,
     weights: list of 2D batch-sized*feature_size float32 Tensors to weight the targets.
     buckets: a list of pairs of (input size, output size) for each bucket.
     feature_size: integer, dimension of output.
-    seq2seq: a sequence-to-sequence model function; it takes 2 input that
+    seq2seq_func: a sequence-to-sequence model function; it takes 2 input that
       agree with encoder_inputs and decoder_inputs, and returns a pair
       consisting of outputs and states (as, e.g., basic_rnn_seq2seq).
     loss_function: function (inputs-batch, labels-batch) -> loss-batch
@@ -346,8 +364,8 @@ def model_with_buckets(encoder_inputs, decoder_inputs, targets, weights,
         raise ValueError("Length of weights (%d) must be at least that of last"
                      "bucket (%d)." % (len(weights), buckets[-1][1]))
 
-    print(np.shape(encoder_inputs))
-    print(encoder_inputs)
+#    print(np.shape(encoder_inputs))
+#    print(encoder_inputs)
     all_inputs = encoder_inputs + decoder_inputs + targets + weights
     losses = []
     outputs = []
@@ -359,13 +377,13 @@ def model_with_buckets(encoder_inputs, decoder_inputs, targets, weights,
                                      for i in xrange(buckets[j][0])]
                 bucket_decoder_inputs = [decoder_inputs[i]
                                      for i in xrange(buckets[j][1])]
-                bucket_outputs, _ = seq2seq(bucket_encoder_inputs,
+                bucket_outputs, _ = seq2seq_func(bucket_encoder_inputs,
                                         bucket_decoder_inputs)
                 outputs.append(bucket_outputs)
 
                 bucket_targets = [targets[i] for i in xrange(buckets[j][1])]
                 bucket_weights = [weights[i] for i in xrange(buckets[j][1])]
-                loss = loss_function(bucket_weights,bucket_targets)
+                loss = loss_function(bucket_outputs,bucket_targets)
                 losses.append(loss)
     #           losses.append(sequence_loss(
     #            outputs[-1], bucket_targets, bucket_weights, num_decoder_symbols,
