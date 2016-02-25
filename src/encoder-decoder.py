@@ -230,6 +230,7 @@ def self_test():
         print("model created")
         sess.run(tf.initialize_all_variables())
         print("model initialized")
+        
 
         # Fake data set for both the (3, 3) and (6, 6) bucket.
         data_set =([([[1.0,2.0],[1.3,2.4],[1.0,3.3]],[[1.0,2.0],[1.3,2.4],[1.0,3.3]]),
@@ -249,6 +250,13 @@ def self_test():
                                  bucket_id, False)
             print(output1)
             print(output2)
+
+        # See the reconstruction
+        print("reconstruction:")
+        _,losses,outputs = model.step(sess, encoder_inputs, decoder_inputs, target_weights,
+                                      bucket_id, True)
+        print(losses)
+        print(outputs)
 
 def main(_):
 #       if FLAGS.self_test:

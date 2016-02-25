@@ -128,9 +128,15 @@ class Seq2SeqModel(object):
 #                    target_vocab_size, output_projection=output_projection,
 #                    feed_previous=do_decode)
 #        
-        def seq2seq_f(encoder_inputs, decoder_inputs):
-            return seq2seq.basic_rnn_seq2seq(
-                   encoder_inputs, decoder_inputs, cell)
+        def seq2seq_f(encoder_inputs, decoder_inputs, forward_only):
+            if forward_only:
+                def loop_func(prev, i):
+                    return prev
+                return seq2seq.basic_rnn_seq2seq(
+                       encoder_inputs, decoder_inputs, cell, loop_func)
+            else:
+                return seq2seq.basic_rnn_seq2seq(
+                       encoder_inputs, decoder_inputs, cell)
         
         # Feeds for inputs.
         self.encoder_inputs = []
@@ -153,33 +159,20 @@ class Seq2SeqModel(object):
                              for i in xrange(len(self.decoder_inputs) - 1)]
 
         # Training outputs and losses.
-        self.outputs, self.losses = model_with_buckets(
+        if forward_only:
+            self.outputs, self.losses = model_with_buckets(
                     self.encoder_inputs, self.decoder_inputs, targets,
                     self.target_weights, buckets, self.feature_size,
-                    lambda x, y: seq2seq_f(x, y),
+                    lambda x, y: seq2seq_f(x, y, True),
+                    loss_function=square_loss_function)
+        else:
+            self.outputs, self.losses = model_with_buckets(
+                    self.encoder_inputs, self.decoder_inputs, targets,
+                    self.target_weights, buckets, self.feature_size,
+                    lambda x, y: seq2seq_f(x, y, False),
                     loss_function=square_loss_function)
 
-
-#        if forward_only:
-#            self.outputs, self.losses = seq2seq.model_with_buckets(
-#                    self.encoder_inputs, self.decoder_inputs, targets,
-#                    self.target_weights, buckets, self.target_vocab_size,
-#                    lambda x, y: seq2seq_f(x, y, True),
-#                    softmax_loss_function=softmax_loss_function)
-#            # If we use output projection, we need to project outputs for decoding.
-#            if output_projection is not None:
-#                for b in xrange(len(buckets)):
-#                    self.outputs[b] = [tf.nn.xw_plus_b(output, output_projection[0],
-#                                                       output_projection[1])
-#                                       for output in self.outputs[b]]
-#        else:
-#            self.outputs, self.losses = seq2seq.model_with_buckets(
-#                    self.encoder_inputs, self.decoder_inputs, targets,
-#                    self.target_weights, buckets, self.target_vocab_size,
-#                    lambda x, y: seq2seq_f(x, y, False),
-#                    softmax_loss_function=softmax_loss_function)
-#
-        # Gradients and SGD update operation for training the model.
+       # Gradients and SGD update operation for training the model.
         params = tf.trainable_variables()
         if not forward_only:
             self.gradient_norms = []
@@ -239,8 +232,8 @@ class Seq2SeqModel(object):
 #        print(input_feed['encoder0:0'])
 
         # Since our targets are decoder inputs shifted by one, we need one more.
-#        last_target = self.decoder_inputs[decoder_size].name
-#        input_feed[last_target] = np.zeros([self.batch_size], dtype=np.int32)
+        last_target = self.decoder_inputs[decoder_size].name
+        input_feed[last_target] = np.zeros([self.batch_size,self.feature_size], dtype=np.float32)
 
         # Output feed: depends on whether we do a backward step or not.
         if not forward_only:
