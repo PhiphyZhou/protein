@@ -183,9 +183,9 @@ def decode():
 
         # Load vocabularies.
         en_vocab_path = os.path.join(FLAGS.data_dir,
-                                                                 "vocab%d.en" % FLAGS.en_vocab_size)
+                                     "vocab%d.en" % FLAGS.en_vocab_size)
         fr_vocab_path = os.path.join(FLAGS.data_dir,
-                                                                 "vocab%d.fr" % FLAGS.fr_vocab_size)
+                                     "vocab%d.fr" % FLAGS.fr_vocab_size)
         en_vocab, _ = data_utils.initialize_vocabulary(en_vocab_path)
         _, rev_fr_vocab = data_utils.initialize_vocabulary(fr_vocab_path)
 
@@ -237,7 +237,7 @@ def self_test():
                      ([[3,2],[4,6],[2,4]],[[3,2],[4,6],[2,4]]),
                      ([[5,4],[6,7],[1,3]],[[5,4],[6,7],[1,3]])],)
 
-        for i in xrange(5):  # Train the fake model for 5 steps.
+        for i in xrange(10):  # Train the fake model for 5 steps.
             print("Training iteration %d" % i)
 #            bucket_id = random.choice([0, 1])
             bucket_id = 0
@@ -246,13 +246,13 @@ def self_test():
                     data_set, bucket_id)
             print("get batches done")
 
-            output1,output2,_ =  model.step(sess, encoder_inputs, decoder_inputs, target_weights,
+            grad_norm,losses,_ =  model.step(sess, encoder_inputs, decoder_inputs, target_weights,
                                  bucket_id, False)
-            print(output1)
-            print(output2)
+            print(grad_norm)
+            print(losses)
 
         # See the reconstruction
-        print("reconstruction:")
+        print("reconstruction of batches:")
         _,losses,outputs = model.step(sess, encoder_inputs, decoder_inputs, target_weights,
                                       bucket_id, True)
         print(losses)

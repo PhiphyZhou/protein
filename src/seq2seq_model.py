@@ -88,27 +88,7 @@ class Seq2SeqModel(object):
                 batch_loss = tf.reduce_mean(frame_loss,0)
                 return batch_loss
         square_loss_function = square_loss
-
-#        # If we use sampled softmax, we need an output projection.
-#        output_projection = None
-#        softmax_loss_function = None
-#        # Sampled softmax only makes sense if we sample less than vocabulary size.
-#        if num_samples > 0 and num_samples < self.target_vocab_size:
-#            with tf.device("/cpu:0"):
-#                w = tf.get_variable("proj_w", [size, self.target_vocab_size])
-#                w_t = tf.transpose(w)
-#                b = tf.get_variable("proj_b", [self.target_vocab_size])
-#            output_projection = (w, b)
-#
-#
-#            def sampled_loss(inputs, labels):
-#                with tf.device("/cpu:0"):
-#                    labels = tf.reshape(labels, [-1, 1])
-#                    return tf.nn.sampled_softmax_loss(w_t, b, inputs, labels, num_samples,
-#                                                      self.target_vocab_size)
-#            softmax_loss_function = sampled_loss
-#
-        
+       
         # Create the internal multi-layer cell for our RNN.
         single_cell = rnn_cell.GRUCell(size)
         if use_lstm:
@@ -116,25 +96,22 @@ class Seq2SeqModel(object):
         cell = single_cell
         if num_layers > 1:
             cell = rnn_cell.MultiRNNCell([single_cell] * num_layers)
-
         # project the output so that it has the same dimension as the target vector.
         # In this way the encoder output is also projected but it doesn't matter.
         cell = rnn_cell.OutputProjectionWrapper(cell, feature_size)
-       
-        # The seq2seq function: we use embedding for the input and attention.
-#        def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
-#            return seq2seq.embedding_attention_seq2seq(
-#                    encoder_inputs, decoder_inputs, cell, source_vocab_size,
-#                    target_vocab_size, output_projection=output_projection,
-#                    feed_previous=do_decode)
-#        
-        def seq2seq_f(encoder_inputs, decoder_inputs, forward_only):
-            if forward_only:
+
+        # The seq2seq neural network structure
+        def seq2seq_f(encoder_inputs, decoder_inputs, loop_output):
+        # loop_output means using the loop_func to construct the next decoder_input
+        #  element using the previous output element 
+            if loop_output:
                 def loop_func(prev, i):
+                # simplest construction: using the previous output as the next input
                     return prev
                 return seq2seq.basic_rnn_seq2seq(
                        encoder_inputs, decoder_inputs, cell, loop_func)
             else:
+                # using the given decoder inputs
                 return seq2seq.basic_rnn_seq2seq(
                        encoder_inputs, decoder_inputs, cell)
         
@@ -146,9 +123,8 @@ class Seq2SeqModel(object):
             self.encoder_inputs.append(tf.placeholder(tf.float32, shape=[None,self.feature_size],
                                                     name="encoder{0}".format(i)))
 
-        # changed from Tensorflow: do not increase decoder size by 1
+        # Increase decoder size by 1 because the first element will be ignored
         for i in xrange(buckets[-1][1] + 1):
-#        for i in xrange(buckets[-1][1]):
             self.decoder_inputs.append(tf.placeholder(tf.float32, shape=[None,self.feature_size],
                                                     name="decoder{0}".format(i)))
             self.target_weights.append(tf.placeholder(tf.float32, shape=[None],
@@ -160,10 +136,12 @@ class Seq2SeqModel(object):
 
         # Training outputs and losses.
         if forward_only:
+            #TODO: I made "loop_output" always False so that it will always use
+            # the given encoder input. Change it back to True when needed. 
             self.outputs, self.losses = model_with_buckets(
                     self.encoder_inputs, self.decoder_inputs, targets,
                     self.target_weights, buckets, self.feature_size,
-                    lambda x, y: seq2seq_f(x, y, True),
+                    lambda x, y: seq2seq_f(x, y, False),
                     loss_function=square_loss_function)
         else:
             self.outputs, self.losses = model_with_buckets(
