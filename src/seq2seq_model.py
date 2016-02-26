@@ -16,6 +16,7 @@ import tensorflow as tf
 
 from tensorflow.models.rnn import rnn_cell
 from tensorflow.models.rnn import seq2seq
+from tensorflow.models.rnn import rnn
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import variable_scope as vs
 
@@ -69,24 +70,6 @@ class Seq2SeqModel(object):
                 self.learning_rate * learning_rate_decay_factor)
         self.global_step = tf.Variable(0, trainable=False)
 
-        # Loss function - square loss
-        # The shape of the inputs is a list of tensors: 
-        #   [sequence_len, tensor(batch_size,feature_size)]
-        def square_loss(outputs, targets):
-            if len(outputs) != len(targets):
-                raise ValueError("Outputs length must be equal to the targets length,"
-                                             " %d != %d." % (len(outputs), len(targets))) 
-            with tf.device("/cpu:0"):
-                frame_loss = [] # list of batch losses of single frames
-                for i in xrange(len(outputs)):
-                    a = tf.sub(outputs[i],targets[i])
-                    b = tf.mul(a,a)
-                    c = tf.reduce_sum(b,1)
-                    frame_loss.append(c)
-                frame_loss = tf.pack(frame_loss)
-                # average over the whole sequence to get the batch losses
-                batch_loss = tf.reduce_mean(frame_loss,0)
-                return batch_loss
         square_loss_function = square_loss
        
         # Create the internal multi-layer cell for our RNN.
@@ -108,13 +91,20 @@ class Seq2SeqModel(object):
                 def loop_func(prev, i):
                 # simplest construction: using the previous output as the next input
                     return prev
-                return seq2seq.basic_rnn_seq2seq(
-                       encoder_inputs, decoder_inputs, cell, loop_func)
+                # use rnn() directly for modified decoder.
+                _, enc_states = rnn.rnn(cell, encoder_inputs, dtype=tf.float32)
+                # note that the returned states are all hidden states, not just the last one
+                outputs,states = seq2seq.rnn_decoder(decoder_inputs, enc_states[-1], cell, loop_func)
             else:
                 # using the given decoder inputs
-                return seq2seq.basic_rnn_seq2seq(
+                outputs,states = seq2seq.basic_rnn_seq2seq(
                        encoder_inputs, decoder_inputs, cell)
-        
+
+            # one way to bound the output in [-1,1]. but not used.
+#            for x in outputs:
+#                x = tf.tanh(x)
+            return outputs,states
+
         # Feeds for inputs.
         self.encoder_inputs = []
         self.decoder_inputs = []
@@ -136,18 +126,18 @@ class Seq2SeqModel(object):
 
         # Training outputs and losses.
         if forward_only:
-            #TODO: I made "loop_output" always False so that it will always use
-            # the given encoder input. Change it back to True when needed. 
+            #TODO: I made "loop_output" always False/True so that it will always use
+            # the given encoder input. Change it when needed. 
             self.outputs, self.losses = model_with_buckets(
                     self.encoder_inputs, self.decoder_inputs, targets,
                     self.target_weights, buckets, self.feature_size,
-                    lambda x, y: seq2seq_f(x, y, False),
+                    lambda x, y: seq2seq_f(x, y, True),
                     loss_function=square_loss_function)
         else:
             self.outputs, self.losses = model_with_buckets(
                     self.encoder_inputs, self.decoder_inputs, targets,
                     self.target_weights, buckets, self.feature_size,
-                    lambda x, y: seq2seq_f(x, y, False),
+                    lambda x, y: seq2seq_f(x, y, True),
                     loss_function=square_loss_function)
 
        # Gradients and SGD update operation for training the model.
@@ -218,6 +208,9 @@ class Seq2SeqModel(object):
             output_feed = [self.updates[bucket_id],  # Update Op that does SGD.
                            self.gradient_norms[bucket_id],    # Gradient norm.
                            self.losses[bucket_id]]    # Loss for this batch.
+            for l in xrange(decoder_size):  # Output logits.
+                output_feed.append(self.outputs[bucket_id][l])
+
         else:
             output_feed = [self.losses[bucket_id]]  # Loss for this batch.
             for l in xrange(decoder_size):  # Output logits.
@@ -225,6 +218,8 @@ class Seq2SeqModel(object):
 
         outputs = session.run(output_feed, input_feed)
         if not forward_only:
+            print("outputs:")
+            print(outputs[3:])
             return outputs[1], outputs[2], None  # Gradient norm, loss, no outputs.
         else:
             return None, outputs[0], outputs[1:]    # No gradient norm, loss, outputs.
@@ -356,12 +351,37 @@ def model_with_buckets(encoder_inputs, decoder_inputs, targets, weights,
                 bucket_weights = [weights[i] for i in xrange(buckets[j][1])]
                 loss = loss_function(bucket_outputs,bucket_targets)
                 losses.append(loss)
-    #           losses.append(sequence_loss(
-    #            outputs[-1], bucket_targets, bucket_weights, num_decoder_symbols,
-    #            softmax_loss_function=softmax_loss_function))
-    #
+   
     return outputs, losses
 
+def square_loss(outputs, targets):
+    '''
+    Loss function - square loss
+
+        Args: outputs, targets
+            The shape of both outputs and targets is a list of tensors: 
+            [sequence_len, tensor(batch_size,feature_size)]
+
+        Returns: 
+        batch_loss: 1D tensor with the size of batch_size. 
+                    Each element is the loss value of that batch
+
+    '''
+    if len(outputs) != len(targets):
+        raise ValueError("Outputs length must be equal to the targets length,"
+                                     " %d != %d." % (len(outputs), len(targets))) 
+    with tf.device("/cpu:0"):
+        frame_loss = [] # list of batch losses of single frames
+        for i in xrange(len(outputs)):
+            a = tf.sub(outputs[i],targets[i])
+            b = tf.square(a)
+            c = tf.reduce_sum(b,1)
+            half = tf.constant(0.5,dtype=tf.float32)
+            frame_loss.append(tf.mul(c,half)) 
+        frame_loss = tf.pack(frame_loss)
+        # average over the whole sequence to get the batch losses
+        batch_loss = tf.reduce_mean(frame_loss,0)
+        return batch_loss
 
 
 
