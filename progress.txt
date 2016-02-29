@@ -4,9 +4,9 @@ To Do(*):
 
 * Use sequence-to-sequence model to learn feature encoding of a sequence of frames (adpted from Tensorflow translation model) 
     - encoder-decoder.train
-    * seq2seq_model.init
-      * redefine loss function in seq2seq_model
-        * debug using simple example to make sure the calculation is correct
+    - seq2seq_model.init
+      - redefine loss function in seq2seq_model
+        - debug using simple example to make sure the calculation is correct
       - rewrite model_with_buckets using a different loss function
     - Use high-dim self-test data to test new loss function
     - seq2seq.embedding_attention_seq2seq: used to define seq2seq_f()

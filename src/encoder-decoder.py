@@ -225,8 +225,8 @@ def self_test():
         #       num_layers, max_gradient_norm, batch_size, learning_rate,
         #       learning_rate_decay_factor, use_lstm=False,
         #       num_samples=512, forward_only=False):
-        model = seq2seq_model.Seq2SeqModel(2, [(3, 3)], 3, 1,
-                                           5.0, 1, 0.3, 0.99)
+        model = seq2seq_model.Seq2SeqModel(2, [(3, 3)], 6, 1,
+                                           5.0, 1, 0.5, 0.99)
         print("model created")
         sess.run(tf.initialize_all_variables())
         print("model initialized")
@@ -237,7 +237,7 @@ def self_test():
                      ([[3,2],[4,6],[2,4]],[[3,2],[4,6],[2,4]]),
                      ([[5,4],[6,7],[1,3]],[[5,4],[6,7],[1,3]])],)
 
-        data_set1 = ([([[0.5,0],[-0.5,0],[0,0.5]],[[0.5,0],[-0.5,0],[0,0.5]])],)
+        data_set1 = ([([[5.0,0],[-5,0],[0,5]],[[5,0],[-5,0],[0,5]])],)
 
         for i in xrange(10):  # Train the fake model for 5 steps.
             print("\nTraining iteration %d" % i)
@@ -261,12 +261,6 @@ def self_test():
         print(decoder_inputs)
         print(outputs)
         print("losses: ",losses)
-
-def test_loss():
-    ''' test the loss function '''
-    with tf.Session() as sess:
-        print("test the loss funcion")
-
 
 def main(_):
 #       if FLAGS.self_test:

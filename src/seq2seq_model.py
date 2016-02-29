@@ -131,13 +131,13 @@ class Seq2SeqModel(object):
             self.outputs, self.losses = model_with_buckets(
                     self.encoder_inputs, self.decoder_inputs, targets,
                     self.target_weights, buckets, self.feature_size,
-                    lambda x, y: seq2seq_f(x, y, True),
+                    lambda x, y: seq2seq_f(x, y, False),
                     loss_function=square_loss_function)
         else:
             self.outputs, self.losses = model_with_buckets(
                     self.encoder_inputs, self.decoder_inputs, targets,
                     self.target_weights, buckets, self.feature_size,
-                    lambda x, y: seq2seq_f(x, y, True),
+                    lambda x, y: seq2seq_f(x, y, False),
                     loss_function=square_loss_function)
 
        # Gradients and SGD update operation for training the model.
@@ -194,14 +194,25 @@ class Seq2SeqModel(object):
         for l in xrange(encoder_size):
             input_feed[self.encoder_inputs[l].name] = encoder_inputs[l]
         for l in xrange(decoder_size):
-            input_feed[self.decoder_inputs[l].name] = decoder_inputs[l]
             input_feed[self.target_weights[l].name] = target_weights[l]
+        
+        # pad 0's at the beginning of the decoder_inputs instead of the end
+        input_feed[self.decoder_inputs[0].name] = np.zeros(
+                [self.batch_size,self.feature_size], dtype=np.float32) 
+        for l in xrange(1,decoder_size+1):
+            input_feed[self.decoder_inputs[l].name] = decoder_inputs[l-1]
 #        print(input_feed.keys())
 #        print(input_feed['encoder0:0'])
 
         # Since our targets are decoder inputs shifted by one, we need one more.
-        last_target = self.decoder_inputs[decoder_size].name
-        input_feed[last_target] = np.zeros([self.batch_size,self.feature_size], dtype=np.float32)
+#        last_target = self.decoder_inputs[decoder_size].name
+#        input_feed[last_target] = np.zeros([self.batch_size,self.feature_size], dtype=np.float32)
+        
+        # print the decoder_inputs values
+#        print("input feed:")
+#        for k in input_feed.keys():
+#            print(k,input_feed[k])
+#        print()
 
         # Output feed: depends on whether we do a backward step or not.
         if not forward_only:
@@ -382,6 +393,25 @@ def square_loss(outputs, targets):
         # average over the whole sequence to get the batch losses
         batch_loss = tf.reduce_mean(frame_loss,0)
         return batch_loss
+
+def test_loss():
+    ''' test the loss function '''
+    with tf.Session() as sess:
+        print("test the loss funcion")
+        outputs = []
+        targets = []
+        for i in xrange(3):
+            outputs.append(tf.constant([[1,1],[2,1.5]]))
+            targets.append(tf.constant([[1+i,0],[2,1.5]]))
+        l2_loss = square_loss(outputs,targets)
+        loss = sess.run(l2_loss)
+    print(loss)
+
+if __name__=="__main__":
+    test_loss()
+
+
+
 
 
 
