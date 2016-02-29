@@ -83,28 +83,6 @@ class Seq2SeqModel(object):
         # In this way the encoder output is also projected but it doesn't matter.
         cell = rnn_cell.OutputProjectionWrapper(cell, feature_size)
 
-        # The seq2seq neural network structure
-        def seq2seq_f(encoder_inputs, decoder_inputs, loop_output):
-        # loop_output means using the loop_func to construct the next decoder_input
-        #  element using the previous output element 
-            if loop_output:
-                def loop_func(prev, i):
-                # simplest construction: using the previous output as the next input
-                    return prev
-                # use rnn() directly for modified decoder.
-                _, enc_states = rnn.rnn(cell, encoder_inputs, dtype=tf.float32)
-                # note that the returned states are all hidden states, not just the last one
-                outputs,states = seq2seq.rnn_decoder(decoder_inputs, enc_states[-1], cell, loop_func)
-            else:
-                # using the given decoder inputs
-                outputs,states = seq2seq.basic_rnn_seq2seq(
-                       encoder_inputs, decoder_inputs, cell)
-
-            # one way to bound the output in [-1,1]. but not used.
-#            for x in outputs:
-#                x = tf.tanh(x)
-            return outputs,states
-
         # Feeds for inputs.
         self.encoder_inputs = []
         self.decoder_inputs = []
@@ -128,16 +106,16 @@ class Seq2SeqModel(object):
         if forward_only:
             #TODO: I made "loop_output" always False/True so that it will always use
             # the given encoder input. Change it when needed. 
-            self.outputs, self.losses = model_with_buckets(
+            self.outputs, self.losses, self.states = model_with_buckets(
                     self.encoder_inputs, self.decoder_inputs, targets,
                     self.target_weights, buckets, self.feature_size,
-                    lambda x, y: seq2seq_f(x, y, False),
+                    lambda x, y: seq2seq_f(cell, x, y, False),
                     loss_function=square_loss_function)
         else:
-            self.outputs, self.losses = model_with_buckets(
+            self.outputs, self.losses, self.states = model_with_buckets(
                     self.encoder_inputs, self.decoder_inputs, targets,
                     self.target_weights, buckets, self.feature_size,
-                    lambda x, y: seq2seq_f(x, y, False),
+                    lambda x, y: seq2seq_f(cell, x, y, False),
                     loss_function=square_loss_function)
 
        # Gradients and SGD update operation for training the model.
@@ -219,12 +197,12 @@ class Seq2SeqModel(object):
             output_feed = [self.updates[bucket_id],  # Update Op that does SGD.
                            self.gradient_norms[bucket_id],    # Gradient norm.
                            self.losses[bucket_id]]    # Loss for this batch.
-            for l in xrange(decoder_size):  # Output logits.
+            for l in xrange(decoder_size):  # Output logits. The last output is ignored.
                 output_feed.append(self.outputs[bucket_id][l])
 
         else:
             output_feed = [self.losses[bucket_id]]  # Loss for this batch.
-            for l in xrange(decoder_size):  # Output logits.
+            for l in xrange(decoder_size):  # Output logits.The last output is ignored.
                 output_feed.append(self.outputs[bucket_id][l])
 
         outputs = session.run(output_feed, input_feed)
@@ -346,6 +324,7 @@ def model_with_buckets(encoder_inputs, decoder_inputs, targets, weights,
     all_inputs = encoder_inputs + decoder_inputs + targets + weights
     losses = []
     outputs = []
+    states = []
     with ops.op_scope(all_inputs, name, "model_with_buckets"):
         for j in xrange(len(buckets)):
             with vs.variable_scope(vs.get_variable_scope(),
@@ -354,26 +333,61 @@ def model_with_buckets(encoder_inputs, decoder_inputs, targets, weights,
                                      for i in xrange(buckets[j][0])]
                 bucket_decoder_inputs = [decoder_inputs[i]
                                      for i in xrange(buckets[j][1])]
-                bucket_outputs, _ = seq2seq_func(bucket_encoder_inputs,
+                bucket_outputs, bucket_states = seq2seq_func(bucket_encoder_inputs,
                                         bucket_decoder_inputs)
                 outputs.append(bucket_outputs)
-
+                states.append(bucket_states)
                 bucket_targets = [targets[i] for i in xrange(buckets[j][1])]
                 bucket_weights = [weights[i] for i in xrange(buckets[j][1])]
                 loss = loss_function(bucket_outputs,bucket_targets)
                 losses.append(loss)
    
-    return outputs, losses
+    return outputs, losses, states
+
+def seq2seq_f(cell, encoder_inputs, decoder_inputs, loop_output):
+    ''' 
+    The seq2seq neural network structurei
+    
+    Args: 
+        cell: the RNNCell object
+        encoder_inputs: a list of Tensors to feed the encoder
+        decoder_inputs: a list of Tensors to feed the decoder
+        loop_output: True for using the loop_func to construct the next 
+            decoder_input element using the previous output element
+
+    Returns:
+        outputs: a list of Tensors generated by the decoder
+        states: the hidden states at the final step of the encoder
+    '''
+    if loop_output:
+        def loop_func(prev, i):
+        # simplest construction: using the previous output as the next input
+            return prev
+        # use rnn() directly for modified decoder.
+        _, enc_states = rnn.rnn(cell, encoder_inputs, dtype=tf.float32)
+        # note that the returned states are all hidden states, not just the last one
+        outputs,states = seq2seq.rnn_decoder(decoder_inputs, enc_states, cell, loop_func)
+    else:
+        # using the given decoder inputs
+        outputs,states = seq2seq.basic_rnn_seq2seq(
+               encoder_inputs, decoder_inputs, cell)
+
+    # one way to bound the output in [-1,1]. but not used.
+#            for x in outputs:
+#                x = tf.tanh(x)
+    print(states)
+    return outputs,states[-1]
+
 
 def square_loss(outputs, targets):
     '''
     Loss function - square loss
 
-        Args: outputs, targets
-            The shape of both outputs and targets is a list of tensors: 
-            [sequence_len, tensor(batch_size,feature_size)]
+    Args: outputs, targets
+        The shape of both outputs and targets is a list of tensors: 
+        [sequence_len, tensor(batch_size,feature_size)]
 
-        Returns: 
+    Returns: 
         batch_loss: 1D tensor with the size of batch_size. 
                     Each element is the loss value of that batch
 
