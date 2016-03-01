@@ -245,9 +245,10 @@ def self_test():
             bucket_id = 0
 #            print(data_set[0])
             encoder_inputs, decoder_inputs, target_weights = model.get_batch(
-                    data_set1, bucket_id)
+                    data_set1, bucket_id, True)
             print("get batches:")
             print(encoder_inputs)
+            print(decoder_inputs)
 
             grad_norm,losses,_ =  model.step(sess, encoder_inputs, decoder_inputs, target_weights,
                                  bucket_id, False)

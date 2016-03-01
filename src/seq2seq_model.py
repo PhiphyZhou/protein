@@ -187,10 +187,10 @@ class Seq2SeqModel(object):
 #        input_feed[last_target] = np.zeros([self.batch_size,self.feature_size], dtype=np.float32)
         
         # print the decoder_inputs values
-#        print("input feed:")
-#        for k in input_feed.keys():
-#            print(k,input_feed[k])
-#        print()
+        print("input feed:")
+        for k in input_feed.keys():
+            print(k,input_feed[k])
+        print()
 
         # Output feed: depends on whether we do a backward step or not.
         if not forward_only:
@@ -214,7 +214,7 @@ class Seq2SeqModel(object):
             return None, outputs[0], outputs[1:]    # No gradient norm, loss, outputs.
 
 
-    def get_batch(self, data, bucket_id):
+    def get_batch(self, data, bucket_id, reverse):
         """Get a random batch of data from the specified bucket, prepare for step.
 
         To feed data in step(..) it must be a list of batch-major vectors, while
@@ -225,7 +225,7 @@ class Seq2SeqModel(object):
             data: a tuple of size len(self.buckets) in which each element contains
                 lists of pairs of input and output data that we use to create a batch.
             bucket_id: integer, which bucket to get the batch for.
-
+            reverse: boolean. Ture for inversing the order of the decoder_inputs
         Returns:
             The triple (encoder_inputs, decoder_inputs, target_weights) for
             the constructed batch that has the proper format to call step(...) later.
@@ -239,7 +239,15 @@ class Seq2SeqModel(object):
             encoder_input, decoder_input = random.choice(data[bucket_id])
             encoder_inputs.append(encoder_input)
             decoder_inputs.append(decoder_input)
-
+        print(decoder_inputs)
+        # inverse decoder_input order if required
+        if reverse:
+            temp = []
+            for i in xrange(len(decoder_inputs)):
+                temp.append(decoder_inputs[i][::-1])
+            decoder_inputs = temp
+        
+        print(decoder_inputs)
         # Now we create batch-major vectors from the data selected above.
         # Different from Tensorflow code: here we assume all sequences are
         # of the same length and we don't do padding
@@ -375,7 +383,7 @@ def seq2seq_f(cell, encoder_inputs, decoder_inputs, loop_output):
     # one way to bound the output in [-1,1]. but not used.
 #            for x in outputs:
 #                x = tf.tanh(x)
-    print(states)
+#    print(states)
     return outputs,states[-1]
 
 

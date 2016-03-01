@@ -15,6 +15,7 @@ To Do(*):
     - encoder-decoder.create_model
     - seq2seq_model.get_batch
     - seq2seq_model.step
+    - inverse the order of decoder_inputs
     * print out the encoded states
     * compute a single reconstruction error (not for batches)
     * test the reconstruction error on test data
