@@ -4,6 +4,8 @@ To Do(*):
 
 * Use sequence-to-sequence model to learn feature encoding of a sequence of frames (adpted from Tensorflow translation model) 
     - encoder-decoder.train
+      * modify for training on protein data
+    * encoder-decoder.encode: a new function for outputing the states of a given sequence
     - seq2seq_model.init
       - redefine loss function in seq2seq_model
         - debug using simple example to make sure the calculation is correct
@@ -15,11 +17,10 @@ To Do(*):
     - encoder-decoder.create_model
     - seq2seq_model.get_batch
     - seq2seq_model.step
-    - inverse the order of decoder_inputs
-    * print out the encoded states
-    * compute a single reconstruction error (not for batches)
-    * test the reconstruction error on test data
-
+    - reverse the order of decoder_inputs
+    - print out the encoded states
+    - compute a single reconstruction error (not for batches)
+     
 * Do classification on the learned features.
 * Go parallel
 ------------

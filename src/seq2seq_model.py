@@ -104,14 +104,14 @@ class Seq2SeqModel(object):
 
         # Training outputs and losses.
         if forward_only:
-            #TODO: I made "loop_output" always False/True so that it will always use
-            # the given encoder input. Change it when needed. 
+            # the decoding(for test) uses the previous output as the target
             self.outputs, self.losses, self.states = model_with_buckets(
                     self.encoder_inputs, self.decoder_inputs, targets,
                     self.target_weights, buckets, self.feature_size,
-                    lambda x, y: seq2seq_f(cell, x, y, False),
+                    lambda x, y: seq2seq_f(cell, x, y, True),
                     loss_function=square_loss_function)
         else:
+            # the training uses the given decoder inputs as the targets
             self.outputs, self.losses, self.states = model_with_buckets(
                     self.encoder_inputs, self.decoder_inputs, targets,
                     self.target_weights, buckets, self.feature_size,
@@ -187,16 +187,17 @@ class Seq2SeqModel(object):
 #        input_feed[last_target] = np.zeros([self.batch_size,self.feature_size], dtype=np.float32)
         
         # print the decoder_inputs values
-        print("input feed:")
-        for k in input_feed.keys():
-            print(k,input_feed[k])
-        print()
+#        print("input feed:")
+#        for k in input_feed.keys():
+#            print(k,input_feed[k])
+#        print()
 
         # Output feed: depends on whether we do a backward step or not.
         if not forward_only:
             output_feed = [self.updates[bucket_id],  # Update Op that does SGD.
                            self.gradient_norms[bucket_id],    # Gradient norm.
-                           self.losses[bucket_id]]    # Loss for this batch.
+                           self.losses[bucket_id], # Loss for this batch.
+                           self.states[bucket_id]]  # encoded states for this batch.
             for l in xrange(decoder_size):  # Output logits. The last output is ignored.
                 output_feed.append(self.outputs[bucket_id][l])
 
@@ -208,8 +209,8 @@ class Seq2SeqModel(object):
         outputs = session.run(output_feed, input_feed)
         if not forward_only:
             print("outputs:")
-            print(outputs[3:])
-            return outputs[1], outputs[2], None  # Gradient norm, loss, no outputs.
+            print(outputs[4:])
+            return outputs[1], outputs[2], outputs[3]  # Gradient norm, loss, states, no outputs.
         else:
             return None, outputs[0], outputs[1:]    # No gradient norm, loss, outputs.
 
@@ -239,7 +240,7 @@ class Seq2SeqModel(object):
             encoder_input, decoder_input = random.choice(data[bucket_id])
             encoder_inputs.append(encoder_input)
             decoder_inputs.append(decoder_input)
-        print(decoder_inputs)
+        
         # inverse decoder_input order if required
         if reverse:
             temp = []
@@ -247,7 +248,6 @@ class Seq2SeqModel(object):
                 temp.append(decoder_inputs[i][::-1])
             decoder_inputs = temp
         
-        print(decoder_inputs)
         # Now we create batch-major vectors from the data selected above.
         # Different from Tensorflow code: here we assume all sequences are
         # of the same length and we don't do padding
@@ -374,7 +374,7 @@ def seq2seq_f(cell, encoder_inputs, decoder_inputs, loop_output):
         # use rnn() directly for modified decoder.
         _, enc_states = rnn.rnn(cell, encoder_inputs, dtype=tf.float32)
         # note that the returned states are all hidden states, not just the last one
-        outputs,states = seq2seq.rnn_decoder(decoder_inputs, enc_states, cell, loop_func)
+        outputs,states = seq2seq.rnn_decoder(decoder_inputs, enc_states[-1], cell, loop_func)
     else:
         # using the given decoder inputs
         outputs,states = seq2seq.basic_rnn_seq2seq(

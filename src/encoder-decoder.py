@@ -225,8 +225,8 @@ def self_test():
         #       num_layers, max_gradient_norm, batch_size, learning_rate,
         #       learning_rate_decay_factor, use_lstm=False,
         #       num_samples=512, forward_only=False):
-        model = seq2seq_model.Seq2SeqModel(2, [(3, 3)], 6, 1,
-                                           5.0, 1, 0.5, 0.99)
+        model = seq2seq_model.Seq2SeqModel(2, [(3, 3)], 10, 2,
+                                           5.0, 5, 0.5, 0.99)
         print("model created")
         sess.run(tf.initialize_all_variables())
         print("model initialized")
@@ -245,13 +245,16 @@ def self_test():
             bucket_id = 0
 #            print(data_set[0])
             encoder_inputs, decoder_inputs, target_weights = model.get_batch(
-                    data_set1, bucket_id, True)
+                    data_set, bucket_id, True)
             print("get batches:")
-            print(encoder_inputs)
-            print(decoder_inputs)
+#            print(encoder_inputs)
+#            print(decoder_inputs)
 
-            grad_norm,losses,_ =  model.step(sess, encoder_inputs, decoder_inputs, target_weights,
+            grad_norm,losses,states =  model.step(sess, encoder_inputs, decoder_inputs, target_weights,
                                  bucket_id, False)
+            print("states:")
+            print(states)
+ 
             print("gradient norm = ",grad_norm)
             print("losses = ",losses)
 
@@ -259,9 +262,12 @@ def self_test():
         print("\nFinal reconstruction of batches:")
         _,losses,outputs = model.step(sess, encoder_inputs, decoder_inputs, target_weights,
                                       bucket_id, True)
+        print("targets:")
         print(decoder_inputs)
+        print("outputs:")
         print(outputs)
         print("losses: ",losses)
+        print("average loss: ",np.mean(losses))
 
 def main(_):
 #       if FLAGS.self_test:
