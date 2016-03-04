@@ -14,8 +14,8 @@ num_files = 1 # number of dcd files we want to analyze
 dcd_path = "/protein-data/bpti-all/bpti-all-"
 pdb_file = "/protein-data/bpti-all.pdb"
 window_size = 10 # number of frames to be averaged
-seq_size = 10 # number of averaged frames in a sequence
-batch_size = 10  # number of sequences in a batch
+seq_size = 5 # number of averaged frames in a sequence
+# batch_size = 10  # number of sequences in a batch
 num_steps = 3 # number of depth of unroll
 
 def load_data(store_ref=False):

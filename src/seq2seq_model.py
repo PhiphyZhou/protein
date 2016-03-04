@@ -148,9 +148,10 @@ class Seq2SeqModel(object):
             forward_only: whether to do the backward step or only forward.
 
         Returns:
-            A triple consisting of gradient norm (or None if we did not do backward),
-            average perplexity, and the outputs.
-
+            if forward_only == False:
+                gradient norm, batch losses, batch states
+            else:
+                None, batch losses, all batch output sequences 
         Raises:
             ValueError: if length of enconder_inputs, decoder_inputs, or
                 target_weights disagrees with bucket size for the specified bucket_id.
@@ -208,8 +209,8 @@ class Seq2SeqModel(object):
 
         outputs = session.run(output_feed, input_feed)
         if not forward_only:
-            print("outputs:")
-            print(outputs[4:])
+#            print("outputs:")
+#            print(outputs[4:])
             return outputs[1], outputs[2], outputs[3]  # Gradient norm, loss, states, no outputs.
         else:
             return None, outputs[0], outputs[1:]    # No gradient norm, loss, outputs.
