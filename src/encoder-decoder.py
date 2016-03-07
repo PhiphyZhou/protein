@@ -95,24 +95,8 @@ def create_model(session, forward_only):
 
 def train():
     """Train an encoder for learning the hidden state of a sequence"""
-
-    # reading data and put them and copy in pairs
-    print("Reading data...")
-    raw_data = dr.load_data()
-#    print(np.array(raw_data).shape)
-    global feature_size
-    feature_size = len(raw_data[0][0])
-    pair_data = []
-    for i in xrange(len(raw_data)):
-        pair = (raw_data[i],raw_data[i])
-        pair_data.append(pair)
-
-    train_data, test_data =dr.split_train_test(pair_data,0.7)
-    train_set = (train_data,) # only one bucket
-    test_set = (test_data,)
-    dev_set = (test_data,) # for simplicity
-#    print(np.array(train_set).shape)
-    
+    train_set, dev_set, _ = get_data()
+   
     train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
     train_total_size = float(sum(train_bucket_sizes))
 
@@ -147,7 +131,7 @@ def train():
             encoder_inputs, decoder_inputs, target_weights = model.get_batch(
                     train_set, bucket_id, True)
 #            print(len(encoder_inputs))
-            grad_norm,step_losses,_ = model.step(sess, encoder_inputs, decoder_inputs,
+            _,step_losses,grad_norm = model.step(sess, encoder_inputs, decoder_inputs,
                                          target_weights, bucket_id, False)
             step_loss = np.mean(step_losses)
             step_time += (time.time() - start_time) / steps_per_checkpoint
@@ -185,48 +169,56 @@ def train():
 
 
 def encode():
+    ''' given a set sequences, output their encoded states
+    
+    Returns:
+        - states: list of arrays of states
+    '''
+    print("reading data...")
+    data = dr.load_data()
+    global feature_size
+    feature_size = len(data[0][0])
+ 
     with tf.Session() as sess:
         # Create model and load parameters.
         model = create_model(sess, True)
-        model.batch_size = 1    # We decode one sentence at a time.
 
-        # Load protein data
+        encoded_states = []
+        bucket_id = 0 
+        # Get encoded states
+        print("encoding...")
+        for encode_inputs in data:    
+            state = model.encode(sess,encode_inputs,bucket_id)
+            encoded_states.append(state)
+            print(state)
+    return encoded_states
 
-        # Load vocabularies.
-        en_vocab_path = os.path.join(FLAGS.data_dir,
-                                     "vocab%d.en" % FLAGS.en_vocab_size)
-        fr_vocab_path = os.path.join(FLAGS.data_dir,
-                                     "vocab%d.fr" % FLAGS.fr_vocab_size)
-        en_vocab, _ = data_utils.initialize_vocabulary(en_vocab_path)
-        _, rev_fr_vocab = data_utils.initialize_vocabulary(fr_vocab_path)
+def get_data(train_portion=0.7):
+    ''' put the protein data into bucketes and split into train, dev, test sets
+        
+        Args:
+            train_portion(default=0.7): the ratio of training data for splitting
 
-        # Decode from standard input.
-        sys.stdout.write("> ")
-        sys.stdout.flush()
-        sentence = sys.stdin.readline()
-        while sentence:
-            # Get token-ids for the input sentence.
-            token_ids = data_utils.sentence_to_token_ids(sentence, en_vocab)
-            # Which bucket does it belong to?
-            bucket_id = min([b for b in xrange(len(_buckets))
-                                             if _buckets[b][0] > len(token_ids)])
-            # Get a 1-element batch to feed the sentence to the model.
-            encoder_inputs, decoder_inputs, target_weights = model.get_batch(
-                    {bucket_id: [(token_ids, [])]}, bucket_id)
-            # Get output logits for the sentence.
-            _, _, output_logits = model.step(sess, encoder_inputs, decoder_inputs,
-                                              target_weights, bucket_id, True)
-            # This is a greedy decoder - outputs are just argmaxes of output_logits.
-            outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
-            # If there is an EOS symbol in outputs, cut them at that point.
-            if data_utils.EOS_ID in outputs:
-                outputs = outputs[:outputs.index(data_utils.EOS_ID)]
-            # Print out French sentence corresponding to outputs.
-            print(" ".join([rev_fr_vocab[output] for output in outputs]))
-            print("> ", end="")
-            sys.stdout.flush()
-            sentence = sys.stdin.readline()
+        Returns:
+            train_set, dev_set, test_set: data sets paired and put in buckets
+    '''
+    print("Reading data...")
+    raw_data = dr.load_data()
+#    print(np.array(raw_data).shape)
+    global feature_size
+    feature_size = len(raw_data[0][0])
+    pair_data = []
+    for i in xrange(len(raw_data)):
+        pair = (raw_data[i],raw_data[i])
+        pair_data.append(pair)
 
+    train_data, test_data =dr.split_train_test(pair_data,train_portion)
+    train_set = (train_data,) # only one bucket
+    test_set = (test_data,)
+    dev_set = (test_data,) # for simplicity
+#    print(np.array(train_set).shape)
+    
+    return train_set,dev_set,test_set
 
 def self_test():
     """Test the translation model."""
@@ -261,7 +253,7 @@ def self_test():
 #            print(encoder_inputs)
 #            print(decoder_inputs)
 
-            grad_norm,losses,states =  model.step(sess, encoder_inputs, decoder_inputs, target_weights,
+            states,losses,grad_norm =  model.step(sess, encoder_inputs, decoder_inputs, target_weights,
                                  bucket_id, False)
             print("states:")
             print(states)
@@ -287,8 +279,13 @@ def main(_):
 #           decode()
 #       else:
 #           train()
-    train()
+#    train()
+#    encode()
 #    self_test()
+    global feature_size 
+    feature_size = 53274
+    with tf.Session() as sess:
+        model = create_model(sess, False)
 
 if __name__ == "__main__":
     tf.app.run()

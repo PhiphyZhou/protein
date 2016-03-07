@@ -6,7 +6,8 @@ To Do(*):
     - encoder-decoder.train
       - modify for training on protein data
     * encoder-decoder.encode: a new function for outputing the states of a given sequence
-      * need to modify the output of seq2seq_model.step for forward_only==True
+      - modify the output of seq2seq_model.step for forward_only==True
+      * write a simpler version for only using the encoder part of the model and input_feed
     - seq2seq_model.init
       - redefine loss function in seq2seq_model
         - debug using simple example to make sure the calculation is correct

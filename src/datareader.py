@@ -18,18 +18,19 @@ seq_size = 5 # number of averaged frames in a sequence
 # batch_size = 10  # number of sequences in a batch
 num_steps = 3 # number of depth of unroll
 
-def load_data(store_ref=False):
+def load_data(rescale=False,store_ref=False):
     '''   
     Read trajectory data and preprocess.
     
-    args:
-    - store_ref
-    If store_ref==True(usually for the first time of reading data),
-    the reference frame and the coordinate boundaries are stored into disk.
-    
-    returns:
-    - data = [num_sequences, sequence_length, 3*atom_number]
-        smoothed, re-referenced and rescaled coordinates
+    Args:
+        - rescale(default=False)
+            If True, rescale the coordinates to [-1,1] using the maximum range of the data.
+        - store_ref(default=False)
+            If store_ref==True(usually for the first time of reading data),
+            the reference frame and the coordinate boundaries are stored into disk.
+    Returns:
+        - data = [num_sequences, sequence_length # of nparray(3*atom_number)]
+            smoothed, re-referenced and rescaled(if required) coordinates
     '''
     
     dcd_files = []
@@ -43,8 +44,7 @@ def load_data(store_ref=False):
         dcd_file=dcd_path+num+".dcd"
         dcd_files.append(dcd_file)
     
-    traj = md.load(dcd_files,top=pdb_file)
-    
+    traj = md.load(dcd_files,top=pdb_file)    
         
     # Superpose each frame with the first frame as the reference
     traj.superpose(traj,0)
@@ -78,15 +78,13 @@ def load_data(store_ref=False):
         coords = []
         for j in xrange(i,i+window_size*seq_size, window_size):
             xyz_ave = np.mean(traj[j:j+window_size].xyz,axis=0)
-#            print xyz_ave[0,0]
-#            if(i==0 and j==0):
-#                print "before rescaling: "+str(xyz_ave[0])
-            xyz_rescaled = np.divide(np.subtract(xyz_ave,mm_sum),mm_dif)
-#            if(i==0 and j==0):
-#                print "after rescaling: "+str(xyz_rescaled[0])
-            xyz_rescaled = xyz_rescaled.flatten()
-#            print "rescale: ",xyz_rescaled[0]
-            coords.append(xyz_rescaled) # one sequence
+            
+            if(rescale):
+                xyz_rescaled = np.divide(np.subtract(xyz_ave,mm_sum),mm_dif)
+                xyz = xyz_rescaled.flatten()
+            else:
+                xyz = xyz_ave.flatten()
+            coords.append(xyz) # one sequence
         data.append(coords) 
     return data
 
@@ -94,11 +92,11 @@ def split_train_test(data,frac):
     '''
     split the whole data set randomly into train and test sets
     
-    args:
-    - frac = the fraction of the train set
+    Args:
+        - frac = the fraction of the train set
 
-    returns:
-    - train_set, test_set
+    Returns:
+        - train_set, test_set
     '''
     train = []
     test = []

@@ -134,6 +134,36 @@ class Seq2SeqModel(object):
 
         self.saver = tf.train.Saver(tf.all_variables())
 
+    def encode(self, session, encoder_inputs,bucket_id):
+        ''' Only using the encoding part of the model 
+        
+        Args:
+            - session: tensorflow session to use
+            - encoder_inputs: list of numpy int vectors to feed as encoder inputs.
+            - bucket_id: which bucket of the model to use
+        Returns:
+            - state: the last hidden state of the encoder sequence
+
+        Raises:
+            ValueError: if length of enconder_inputs
+                disagrees with bucket size for the specified bucket_id.
+        '''
+        # Check if the sizes match.
+        encoder_size, _ = self.buckets[bucket_id]
+        if len(encoder_inputs) != encoder_size:
+            raise ValueError("Encoder length must be equal to the one in bucket,"
+                                             " %d != %d." % (len(encoder_inputs), encoder_size))
+        
+        # input_feed: a sequence of input elements
+        input_feed = {}
+        for l in xrange(encoder_size):
+            input_feed[self.encoder_inputs[l].name] = encoder_inputs[l]
+        
+        # output_feed: a sequence of hidden states
+        output_feed = [self.states[bucket_id]]
+        
+        outputs = session.run(output_feed, input_feed)
+        return outputs[-1]
 
     def step(self, session, encoder_inputs, decoder_inputs, target_weights,
                      bucket_id, forward_only):
@@ -146,12 +176,11 @@ class Seq2SeqModel(object):
             target_weights: list of numpy float vectors to feed as target weights.
             bucket_id: which bucket of the model to use.
             forward_only: whether to do the backward step or only forward.
-
         Returns:
             if forward_only == False:
-                gradient norm, batch losses, batch states
+                batch states, batch losses, gradient norm
             else:
-                None, batch losses, all batch output sequences 
+                batch states, batch losses, all batch output sequences 
         Raises:
             ValueError: if length of enconder_inputs, decoder_inputs, or
                 target_weights disagrees with bucket size for the specified bucket_id.
@@ -203,7 +232,8 @@ class Seq2SeqModel(object):
                 output_feed.append(self.outputs[bucket_id][l])
 
         else:
-            output_feed = [self.losses[bucket_id]]  # Loss for this batch.
+            # states and Loss for this batch.
+            output_feed = [self.states[bucket_id], self.losses[bucket_id]]  
             for l in xrange(decoder_size):  # Output logits.The last output is ignored.
                 output_feed.append(self.outputs[bucket_id][l])
 
@@ -211,12 +241,12 @@ class Seq2SeqModel(object):
         if not forward_only:
 #            print("outputs:")
 #            print(outputs[4:])
-            return outputs[1], outputs[2], outputs[3]  # Gradient norm, loss, states, no outputs.
+            return outputs[3], outputs[2], outputs[1]  # states, losses, gradient norms , no outputs.
         else:
-            return None, outputs[0], outputs[1:]    # No gradient norm, loss, outputs.
+            return outputs[0], outputs[1], outputs[2:]    # states, loss, outputs.
 
 
-    def get_batch(self, data, bucket_id, reverse):
+    def get_batch(self, data, bucket_id, reverse=False):
         """Get a random batch of data from the specified bucket, prepare for step.
 
         To feed data in step(..) it must be a list of batch-major vectors, while
@@ -227,7 +257,7 @@ class Seq2SeqModel(object):
             data: a tuple of size len(self.buckets) in which each element contains
                 lists of pairs of input and output data that we use to create a batch.
             bucket_id: integer, which bucket to get the batch for.
-            reverse: boolean. Ture for inversing the order of the decoder_inputs
+            reverse(default=False): boolean. Ture for inversing the order of the decoder_inputs
         Returns:
             The triple (encoder_inputs, decoder_inputs, target_weights) for
             the constructed batch that has the proper format to call step(...) later.
