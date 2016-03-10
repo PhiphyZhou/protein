@@ -1,20 +1,8 @@
-# This file is adapted from the Tensorfile code:
-# https://github.com/tensorflow/tensorflow/blob/master/tensorflow/models/rnn/translate/translate.py
-
 """Binary for training translation models and decoding from them.
-
-Running this program without --decode will download the WMT corpus into
-the directory specified as --data_dir and tokenize it in a very basic way,
-and then start training a model saving checkpoints to --train_dir.
-
-Running with --decode starts an interactive loop so you can see how
-the current checkpoint translates English sentences into French.
-
-See the following papers for more information on neural translation models.
- * http://arxiv.org/abs/1409.3215
- * http://arxiv.org/abs/1409.0473
- * http://arxiv.org/pdf/1412.2007v2.pdf
+This file is adapted from the Tensorfile code:
+https://github.com/tensorflow/tensorflow/blob/master/tensorflow/models/rnn/translate/translate.py
 """
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -36,45 +24,35 @@ from tensorflow.python.platform import gfile
 
 import datareader as dr
 
-# tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
-# tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99,
-#                                                       "Learning rate decays by this much.")
-# tf.app.flags.DEFINE_float("max_gradient_norm", 5.0,
-#                                                       "Clip gradients to this norm.")
-# tf.app.flags.DEFINE_integer("batch_size", 64,
-#                                                           "Batch size to use during training.")
-# tf.app.flags.DEFINE_integer("size", 1024, "Size of each model layer.")
-# tf.app.flags.DEFINE_integer("num_layers", 3, "Number of layers in the model.")
-# tf.app.flags.DEFINE_integer("en_vocab_size", 40000, "English vocabulary size.")
-# tf.app.flags.DEFINE_integer("fr_vocab_size", 40000, "French vocabulary size.")
-# tf.app.flags.DEFINE_string("data_dir", "/tmp", "Data directory")
-# tf.app.flags.DEFINE_string("train_dir", "/tmp", "Training directory.")
-# tf.app.flags.DEFINE_integer("max_train_data_size", 0,
-#                                                           "Limit on the size of training data (0: no limit).")
-# tf.app.flags.DEFINE_integer("steps_per_checkpoint", 200,
-#                                                           "How many training steps to do per checkpoint.")
-# tf.app.flags.DEFINE_boolean("decode", False,
-#                                                           "Set to True for interactive decoding.")
-# tf.app.flags.DEFINE_boolean("self_test", False,
-#                      "Run a self-test if this is set to True.")
-# 
-# FLAGS = tf.app.flags.FLAGS
+##################### TUNING PARAMETERS ###########################
+### Modify the following parameters for experiments ###
 
+## Data inputs ##
+num_files = 1 # number of dcd files we want to analyze, for bpti data 
+#protein_name = "bpti"
+protein_name = "alanine"
+window_size = 10 # number of frames to be averaged
+seq_size = 5 # number of averaged frames in a sequence
+data_para = (protein_name,num_files,window_size,seq_size)
+
+## Model inputs ##
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
 _buckets = [(5,5)] # all sequences will be of the same length
-
 feature_size = 0 # to be decided after reading training data
 hidden_size = 100
 num_layers = 1
 max_gradient_norm = 0.1
-batch_size = 3
+batch_size = 5
 learning_rate = 0.1 
 learning_rate_decay_factor = 0.5
-train_dir = "/output"
+train_dir = "/output/"+protein_name
 steps_per_checkpoint = 3
 max_steps = 100 # the maximum number of steps for each training
 min_learning_rate = 0.001 # the minimum learning rate for terminating the training
+num_steps = 3 # number of depth of unroll
+
+########################################################
 
 def create_model(session, forward_only):
     """Create translation model and initialize or load parameters in session."""
@@ -149,7 +127,7 @@ def train():
                 # Decrease learning rate if no improvement was seen over last 3 times.
                 if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
                     sess.run(model.learning_rate_decay_op)
-                if model.learning_rate < min_learning_rate:
+                if model.learning_rate.eval() < min_learning_rate:
                     break
                 previous_losses.append(loss)
                 # Save checkpoint and zero timer and loss.
@@ -192,7 +170,7 @@ def encode():
  #       print(encoder_inputs)
         states,_,_ = model.step(sess, encoder_inputs, decoder_inputs,
                                          target_weights, bucket_id, True)
-        print("\nHidden states:")
+        print("\nEncoded states:")
         print(states)
         print(np.shape(states))
 
@@ -208,8 +186,8 @@ def get_data(train_portion=0.7):
             train_set, dev_set, test_set: data sets paired and put in buckets
     '''
     print("Reading data...")
-    raw_data = dr.load_data()
-#    print(np.array(raw_data).shape)
+    raw_data = dr.load_data(data_para)
+    print(np.array(raw_data).shape)
     global feature_size
     feature_size = len(raw_data[0][0])
     pair_data = []
@@ -278,19 +256,9 @@ def self_test():
         print("average loss: ",np.mean(losses))
 
 def main(_):
-#       if FLAGS.self_test:
-#           self_test()
-#       elif FLAGS.decode:
-#           decode()
-#       else:
-#           train()
 #    train()
     encode()
 #    self_test()
-#    global feature_size 
-#    feature_size = 53274
-#    with tf.Session() as sess:
-#        model = create_model(sess, False)
 
 if __name__ == "__main__":
     tf.app.run()

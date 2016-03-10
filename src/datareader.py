@@ -9,20 +9,12 @@ import mdtraj as md
 import numpy as np
 import pickle, random
 
-# Data file parameters
-num_files = 1 # number of dcd files we want to analyze 
-dcd_path = "/protein-data/bpti-all/bpti-all-"
-pdb_file = "/protein-data/bpti-all.pdb"
-window_size = 10 # number of frames to be averaged
-seq_size = 5 # number of averaged frames in a sequence
-# batch_size = 10  # number of sequences in a batch
-num_steps = 3 # number of depth of unroll
-
-def load_data(rescale=False,store_ref=False):
+def load_data(data_para,rescale=False,store_ref=False):
     '''   
     Read trajectory data and preprocess.
     
     Args:
+        - data_para: protein_name,num_files,window_size,seq_size
         - rescale(default=False)
             If True, rescale the coordinates to [-1,1] using the maximum range of the data.
         - store_ref(default=False)
@@ -31,19 +23,31 @@ def load_data(rescale=False,store_ref=False):
     Returns:
         - data = [num_sequences, sequence_length # of nparray(3*atom_number)]
             smoothed, re-referenced and rescaled(if required) coordinates
+    Raise:
+        ValueError: if value protein is not an known protein name.
     '''
-    
-    dcd_files = []
-    for i in xrange(num_files):
-        if(i<10):
-            num="00"+str(i)
-        elif(i<100):
-            num="0"+str(i)
-        else: 
-            num=str(i)
-        dcd_file=dcd_path+num+".dcd"
-        dcd_files.append(dcd_file)
-    
+    protein,num_files,window_size,seq_size = data_para
+    if(protein=="bpti"):
+        # deal with bpti data
+        dcd_path = "/protein-data/bpti-all/bpti-all-"
+        pdb_file = "/protein-data/bpti-all.pdb"
+        dcd_files = []
+        for i in xrange(num_files):
+            if(i<10):
+                num="00"+str(i)
+            elif(i<100):
+                num="0"+str(i)
+            else: 
+                num=str(i)
+            dcd_file=dcd_path+num+".dcd"
+            dcd_files.append(dcd_file)
+    elif(protein=="alanine"):
+        # deal with alanine data
+        dcd_files = "../data/md/alanine.dcd"
+        pdb_file = "../data/md/alanine.pdb"
+    else:
+        raise ValueError("Unknown protein name: ",protein)
+ 
     traj = md.load(dcd_files,top=pdb_file)    
         
     # Superpose each frame with the first frame as the reference

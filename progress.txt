@@ -4,6 +4,8 @@ To Do(*):
 
 * Do classification on the learned features.
     * do it on alanine data and compare to rmsd clustering result
+      - modify datareader to read the alanine data
+      * deal with data in water
 * Go parallel
 ------------
 Done(-):
