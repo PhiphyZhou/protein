@@ -26,6 +26,8 @@ def load_data(data_para,rescale=False,store_ref=False):
     Raise:
         ValueError: if value protein is not an known protein name.
     '''
+
+    # construct data file path
     protein,num_files,window_size,seq_size = data_para
     if(protein=="bpti"):
         # deal with bpti data
@@ -47,9 +49,19 @@ def load_data(data_para,rescale=False,store_ref=False):
         pdb_file = "../data/md/alanine.pdb"
     else:
         raise ValueError("Unknown protein name: ",protein)
- 
+    
+    # read trajectories 
     traj = md.load(dcd_files,top=pdb_file)    
-        
+    print(traj)
+    top = traj.topology
+    print(top)
+#    print([a for a in top.atoms])
+#    print(top.atom(-100).residue.is_water)
+    protein_atoms = top.select("protein")
+    a = top.select("water")
+    print(protein_atoms.size, a.size)
+    print(a)
+
     # Superpose each frame with the first frame as the reference
     traj.superpose(traj,0)
     
@@ -157,11 +169,18 @@ def data_iterator(raw_data,num_steps):
 
 
 if __name__=="__main__":
-    data = load_data(True)
-    train, test = split_train_test(data,0.7)
-    for step, (x, y) in enumerate(data_iterator(test,num_steps)):
-        print "x: \n", x
-        print "y: \n", y
+    num_files = 1
+#    protein_name = "alanine"
+    protein_name = "bpti"
+    window_size = 10 # number of frames to be averaged
+    seq_size = 5 # number of averaged frames in a sequence
+    data_para = (protein_name,num_files,window_size,seq_size)
+    data = load_data(data_para)
+
+#    train, test = split_train_test(data,0.7)
+#    for step, (x, y) in enumerate(data_iterator(test,num_steps)):
+#        print "x: \n", x
+#        print "y: \n", y
 #    print len(train),len(test)
 #    print np.amax(data,axis=(0,1,2))
 #    print np.amin(data,axis=(0,1,2))

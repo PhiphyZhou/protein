@@ -5,7 +5,7 @@ To Do(*):
 * Do classification on the learned features.
     * do it on alanine data and compare to rmsd clustering result
       - modify datareader to read the alanine data
-      * deal with data in water
+      * deal with data in water with topology.selection function 
 * Go parallel
 ------------
 Done(-):
