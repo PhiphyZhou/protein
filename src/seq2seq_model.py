@@ -20,9 +20,6 @@ from tensorflow.models.rnn import rnn
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import variable_scope as vs
 
-import data_utils
-
-
 class Seq2SeqModel(object):
     """Sequence-to-sequence model with attention and for multiple buckets.
 
@@ -246,7 +243,7 @@ class Seq2SeqModel(object):
             return outputs[0], outputs[1], outputs[2:]    # states, loss, outputs.
 
 
-    def get_batch(self, data, bucket_id, reverse=False):
+    def get_batch(self, data, bucket_id, reverse=False, get_all=False):
         """Get a random batch of data from the specified bucket, prepare for step.
 
         To feed data in step(..) it must be a list of batch-major vectors, while
@@ -258,6 +255,7 @@ class Seq2SeqModel(object):
                 lists of pairs of input and output data that we use to create a batch.
             bucket_id: integer, which bucket to get the batch for.
             reverse(default=False): boolean. Ture for inversing the order of the decoder_inputs
+            get_all(default=False): If ture, reshape all data in the bucket and return. 
         Returns:
             The triple (encoder_inputs, decoder_inputs, target_weights) for
             the constructed batch that has the proper format to call step(...) later.
@@ -265,13 +263,21 @@ class Seq2SeqModel(object):
         """
         encoder_size, decoder_size = self.buckets[bucket_id]
         encoder_inputs, decoder_inputs = [], []
-
-        # Get a random batch of encoder and decoder inputs from data,
-        for _ in xrange(self.batch_size):
-            encoder_input, decoder_input = random.choice(data[bucket_id])
-            encoder_inputs.append(encoder_input)
-            decoder_inputs.append(decoder_input)
         
+        if not get_all:
+            # Get a random batch of encoder and decoder inputs from data
+            for _ in xrange(self.batch_size):
+                encoder_input, decoder_input = random.choice(data[bucket_id])
+                encoder_inputs.append(encoder_input)
+                decoder_inputs.append(decoder_input)
+        else:
+            # treat the whole dataset as a batch
+            self.batch_size = len(data[bucket_id])
+            for i in xrange(len(data[bucket_id])):
+                encoder_input, decoder_input = data[bucket_id][i]
+                encoder_inputs.append(encoder_input)
+                decoder_inputs.append(decoder_input)
+
         # inverse decoder_input order if required
         if reverse:
             temp = []

@@ -31,7 +31,6 @@ import numpy as np
 from six.moves import xrange    # pylint: disable=redefined-builtin
 import tensorflow as tf
 
-import data_utils
 import seq2seq_model
 from tensorflow.python.platform import gfile
 
@@ -69,7 +68,7 @@ feature_size = 0 # to be decided after reading training data
 hidden_size = 100
 num_layers = 1
 max_gradient_norm = 0.1
-batch_size = 5
+batch_size = 3
 learning_rate = 0.1 
 learning_rate_decay_factor = 0.5
 train_dir = "/output"
@@ -174,23 +173,29 @@ def encode():
     Returns:
         - states: list of arrays of states
     '''
-    print("reading data...")
-    data = dr.load_data()
-    global feature_size
-    feature_size = len(data[0][0])
- 
+#    data = dr.load_data()
+#    global feature_size
+#    feature_size = len(data[0][0])
+    data_set,_,_ = get_data(1.0) 
+#    print(data_set)
+    print("# of samples: ",len(data_set[0]))
+
     with tf.Session() as sess:
         # Create model and load parameters.
-        model = create_model(sess, True)
+        model = create_model(sess, False)
 
         encoded_states = []
         bucket_id = 0 
         # Get encoded states
-        print("encoding...")
-        for encode_inputs in data:    
-            state = model.encode(sess,encode_inputs,bucket_id)
-            encoded_states.append(state)
-            print(state)
+        encoder_inputs, decoder_inputs, target_weights = model.get_batch(
+                    data_set, bucket_id, get_all=True)
+ #       print(encoder_inputs)
+        states,_,_ = model.step(sess, encoder_inputs, decoder_inputs,
+                                         target_weights, bucket_id, True)
+        print("\nHidden states:")
+        print(states)
+        print(np.shape(states))
+
     return encoded_states
 
 def get_data(train_portion=0.7):
@@ -280,12 +285,12 @@ def main(_):
 #       else:
 #           train()
 #    train()
-#    encode()
+    encode()
 #    self_test()
-    global feature_size 
-    feature_size = 53274
-    with tf.Session() as sess:
-        model = create_model(sess, False)
+#    global feature_size 
+#    feature_size = 53274
+#    with tf.Session() as sess:
+#        model = create_model(sess, False)
 
 if __name__ == "__main__":
     tf.app.run()

@@ -100,6 +100,10 @@ def split_train_test(data,frac):
     '''
     train = []
     test = []
+
+    if(frac>0.99999999):
+        train = data
+        return train, test
     if frac<0.5 or frac>1:
         raise ValueError("frac must be a real number in [0.5,1]")
     # random splitting
