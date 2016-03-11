@@ -52,16 +52,19 @@ def load_data(data_para,rescale=False,store_ref=False):
     
     # read trajectories 
     traj = md.load(dcd_files,top=pdb_file)    
-    print(traj)
+#    print(traj)
     top = traj.topology
-    print(top)
+#    print(top)
 #    print([a for a in top.atoms])
 #    print(top.atom(-100).residue.is_water)
     protein_atoms = top.select("protein")
-    a = top.select("water")
-    print(protein_atoms.size, a.size)
-    print(a)
+ #   wa = top.select("water")
+ #   print("protein",protein_atoms.size,"water",wa.size)
 
+    # extract the protein atoms in the trajectory
+    traj = traj.atom_slice(protein_atoms)
+#    print(traj)
+        
     # Superpose each frame with the first frame as the reference
     traj.superpose(traj,0)
     

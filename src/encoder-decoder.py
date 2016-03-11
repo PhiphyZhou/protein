@@ -29,8 +29,8 @@ import datareader as dr
 
 ## Data inputs ##
 num_files = 1 # number of dcd files we want to analyze, for bpti data 
-#protein_name = "bpti"
-protein_name = "alanine"
+protein_name = "bpti"
+#protein_name = "alanine"
 window_size = 10 # number of frames to be averaged
 seq_size = 5 # number of averaged frames in a sequence
 data_para = (protein_name,num_files,window_size,seq_size)
@@ -48,7 +48,7 @@ learning_rate = 0.1
 learning_rate_decay_factor = 0.5
 train_dir = "/output/"+protein_name
 steps_per_checkpoint = 3
-max_steps = 100 # the maximum number of steps for each training
+max_steps = 1000 # the maximum number of steps for each training
 min_learning_rate = 0.001 # the minimum learning rate for terminating the training
 num_steps = 3 # number of depth of unroll
 
