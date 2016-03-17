@@ -9,6 +9,8 @@ RUN pip install cython
 RUN pip install nose
 RUN pip install mdtraj
 RUN pip install --user MDAnalysis MDAnalysisTests
+
+ADD OpenMM-6.3.1-Linux / 
 RUN cd OpenMM-6.3.1-Linux
 RUN ./install.sh
 

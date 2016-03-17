@@ -2,12 +2,27 @@
 
 cd $(dirname $0)
 
-# set the install location and Python executable.
+# Ask the user for the install location and Python executable.
 
 defaultInstallDir=/usr/local/openmm
-installDir=${defaultInstallDir}
+printf "Enter install location (default=${defaultInstallDir}): "
+read installDir
+if [ -z ${installDir} ]
+then
+  installDir=${defaultInstallDir}
+fi
 defaultPythonBin=$(which python)
-pythonBin=${defaultPythonBin}
+printf "Enter path to Python executable"
+if [ ${defaultPythonBin} ]
+then
+  printf " (default=${defaultPythonBin})"
+fi
+printf ": "
+read pythonBin
+if [ -z ${pythonBin} ]
+then
+  pythonBin=${defaultPythonBin}
+fi
 
 # Make sure it's a supported Python version.
 
