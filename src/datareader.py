@@ -6,6 +6,7 @@ This module is for preprocessing the DE Shaw BPTI data,ie, to:
 '''
 
 import mdtraj as md
+import mdtraj.testing as mdtesting
 import numpy as np
 import pickle, random
 
@@ -45,25 +46,26 @@ def load_data(data_para,rescale=False,store_ref=False):
             dcd_files.append(dcd_file)
     elif(protein=="alanine"):
         # deal with alanine data
-        dcd_files = "../data/md/alanine.dcd"
-        pdb_file = "../data/md/alanine.pdb"
+        dcd_files = "/output/alanine/ala.dcd"    
+        pdb_file = md.load(mdtesting.get_fn('native.pdb'))
     else:
         raise ValueError("Unknown protein name: ",protein)
     
     # read trajectories 
     traj = md.load(dcd_files,top=pdb_file)    
-#    print(traj)
+    
+    print(traj)
     top = traj.topology
 #    print(top)
 #    print([a for a in top.atoms])
 #    print(top.atom(-100).residue.is_water)
     protein_atoms = top.select("protein")
- #   wa = top.select("water")
- #   print("protein",protein_atoms.size,"water",wa.size)
+    wa = top.select("water")
+    print("protein",protein_atoms.size,"water",wa.size)
 
     # extract the protein atoms in the trajectory
     traj = traj.atom_slice(protein_atoms)
-#    print(traj)
+    print(traj)
         
     # Superpose each frame with the first frame as the reference
     traj.superpose(traj,0)
@@ -173,8 +175,8 @@ def data_iterator(raw_data,num_steps):
 
 if __name__=="__main__":
     num_files = 1
-#    protein_name = "alanine"
-    protein_name = "bpti"
+    protein_name = "alanine"
+#    protein_name = "bpti"
     window_size = 10 # number of frames to be averaged
     seq_size = 5 # number of averaged frames in a sequence
     data_para = (protein_name,num_files,window_size,seq_size)
