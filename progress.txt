@@ -6,8 +6,13 @@ To Do(*):
     * do it on alanine data and compare to rmsd clustering result
       - modify datareader to read the alanine data
       - deal with data in water with topology.selection function 
-      * generate alanine simulation data
+      - generate alanine simulation data (using NAMD)
+      - Figure out the error of installing OpenMM using Dockerfile 
+        (abandoned OpenMM because of nan error in integration)
+      * do rmsd clustering on alanine and label each frame  
+
 * Go parallel
+
 ------------
 Done(-):
 - Set up Docker image using Dockerfile

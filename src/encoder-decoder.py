@@ -32,25 +32,25 @@ num_files = 100 # number of dcd files we want to analyze, for bpti data
 #protein_name = "bpti"
 protein_name = "alanine"
 window_size = 1 # number of frames to be averaged
-seq_size = 2 # number of averaged frames in a sequence
+seq_size = 4 # number of averaged frames in a sequence
 data_para = (protein_name,num_files,window_size,seq_size)
 
 ## Model inputs ##
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(2,2)] # all sequences will be of the same length
+_buckets = [(4,4)] # all sequences will be of the same length
 feature_size = 0 # to be decided after reading training data
 hidden_size = 10
 num_layers = 2
-max_gradient_norm = 5.0
-batch_size = 64
+max_gradient_norm = 1.0
+batch_size = 5
 learning_rate = 0.5
-learning_rate_decay_factor = 0.99
+learning_rate_decay_factor = 0.9
 train_dir = "/output/"+protein_name
-steps_per_checkpoint = 10
-max_steps = 100 # the maximum number of steps for each training
+steps_per_checkpoint = 5
+max_steps = 1000 # the maximum number of steps for each training
 min_learning_rate = 0.01 # the minimum learning rate for terminating the training
-num_steps = 3 # number of depth of unroll
+# num_steps = 3 # number of depth of unroll
 
 ########################################################
 

@@ -426,7 +426,7 @@ def seq2seq_f(cell, encoder_inputs, decoder_inputs, loop_output):
 
 def square_loss(outputs, targets):
     '''
-    Loss function - square loss
+    Loss function - square loss (rmsd^2)
 
     Args: outputs, targets
         The shape of both outputs and targets is a list of tensors: 
@@ -446,8 +446,8 @@ def square_loss(outputs, targets):
             a = tf.sub(outputs[i],targets[i])
             b = tf.square(a)
             c = tf.reduce_sum(b,1)
-            half = tf.constant(0.5,dtype=tf.float32)
-            frame_loss.append(tf.mul(c,half)) 
+            n = tf.constant(a.get_shape().dims[1].value/3,dtype=tf.float32) # number of atoms
+            frame_loss.append(tf.div(c,n)) 
         frame_loss = tf.pack(frame_loss)
         # average over the whole sequence to get the batch losses
         batch_loss = tf.reduce_mean(frame_loss,0)

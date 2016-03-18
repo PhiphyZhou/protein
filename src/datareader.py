@@ -10,6 +10,61 @@ import mdtraj.testing as mdtesting
 import numpy as np
 import pickle, random
 
+def load_traj(protein, num_files=1):
+    '''
+    load the trajectory object from dcd files
+
+    Args: 
+        - protein: "bpti" or "alanine"
+        - num_files: for bpti only
+
+    Return: traj object
+    '''
+    
+    print("loading traj object...")
+    # construct data file path
+    if(protein=="bpti"):
+        # deal with bpti data
+        dcd_path = "/protein-data/bpti-all/bpti-all-"
+        pdb_file = "/protein-data/bpti-all.pdb"
+        dcd_files = []
+        for i in xrange(num_files):
+            if(i<10):
+                num="00"+str(i)
+            elif(i<100):
+                num="0"+str(i)
+            else: 
+                num=str(i)
+            dcd_file=dcd_path+num+".dcd"
+            dcd_files.append(dcd_file)
+    elif(protein=="alanine"):
+        # deal with alanine data
+        dcd_files = "../data/alanine.dcd"    
+        pdb_file = "../data/alanine.pdb"               
+    else:
+        raise ValueError("Unknown protein name: ",protein)
+    
+    # read trajectories 
+    traj = md.load(dcd_files,top=pdb_file)    
+    
+#    print(traj)
+    top = traj.topology
+#    print(top)
+#    print([a for a in top.atoms])
+#    print(top.atom(-100).residue.is_water)
+
+    # slice the atoms to get rid of water
+#    protein_atoms = top.select("protein")
+    relevant = top.select("not water")
+    
+    # extract the protein atoms in the trajectory
+    traj = traj.atom_slice(relevant)
+    print(traj)
+        
+    # Superpose each frame with the first frame as the reference
+    traj.superpose(traj,0)
+    return traj
+
 def load_data(data_para,rescale=False,store_ref=False):
     '''   
     Read trajectory data and preprocess.
@@ -28,48 +83,10 @@ def load_data(data_para,rescale=False,store_ref=False):
         ValueError: if value protein is not an known protein name.
     '''
 
-    # construct data file path
-    protein,num_files,window_size,seq_size = data_para
-    if(protein=="bpti"):
-        # deal with bpti data
-        dcd_path = "/protein-data/bpti-all/bpti-all-"
-        pdb_file = "/protein-data/bpti-all.pdb"
-        dcd_files = []
-        for i in xrange(num_files):
-            if(i<10):
-                num="00"+str(i)
-            elif(i<100):
-                num="0"+str(i)
-            else: 
-                num=str(i)
-            dcd_file=dcd_path+num+".dcd"
-            dcd_files.append(dcd_file)
-    elif(protein=="alanine"):
-        # deal with alanine data
-        dcd_files = "/output/alanine/ala.dcd"    
-        pdb_file = md.load(mdtesting.get_fn('native.pdb'))
-    else:
-        raise ValueError("Unknown protein name: ",protein)
-    
-    # read trajectories 
-    traj = md.load(dcd_files,top=pdb_file)    
-    
-    print(traj)
-    top = traj.topology
-#    print(top)
-#    print([a for a in top.atoms])
-#    print(top.atom(-100).residue.is_water)
-    protein_atoms = top.select("protein")
-    wa = top.select("water")
-    print("protein",protein_atoms.size,"water",wa.size)
+    # load the trajectory
+    protein, num_files, window_size, seq_size = data_para
+    traj = load_traj(protein,num_files)
 
-    # extract the protein atoms in the trajectory
-    traj = traj.atom_slice(protein_atoms)
-    print(traj)
-        
-    # Superpose each frame with the first frame as the reference
-    traj.superpose(traj,0)
-    
     # bounds for rescaling
     xyz_max=np.amax(traj.xyz,axis=0)
     xyz_min=np.amin(traj.xyz,axis=0)
@@ -177,8 +194,8 @@ if __name__=="__main__":
     num_files = 1
     protein_name = "alanine"
 #    protein_name = "bpti"
-    window_size = 10 # number of frames to be averaged
-    seq_size = 5 # number of averaged frames in a sequence
+    window_size = 1 # number of frames to be averaged
+    seq_size = 2 # number of averaged frames in a sequence
     data_para = (protein_name,num_files,window_size,seq_size)
     data = load_data(data_para)
 
