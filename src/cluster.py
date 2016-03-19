@@ -14,8 +14,8 @@ protein = "alanine"
 K = 3 # number of clusters
 
 def k_means(traj, K):
-    ''' do k-means clustering directly on coordinates. 
-        Not used.
+    ''' 
+    k-means clustering directly on coordinates. 
     '''
     # get flattened coordinates of each frame
     coords = traj.xyz

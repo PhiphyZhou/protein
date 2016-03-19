@@ -1,23 +1,29 @@
 -------------
 To Do(*): 
-* Basic rnn on trajectory data for predicting the next frame (adapted from Tensorflow ptb model)
 
-* Do classification on the learned features.
+* Test classification on the learned features.
     * do it on alanine data and compare to rmsd clustering result
       - modify datareader to read the alanine data
       - deal with data in water with topology.selection function 
       - generate alanine simulation data (using NAMD)
       - Figure out the error of installing OpenMM using Dockerfile 
         (abandoned OpenMM because of nan error in integration)
-      - do rmsd clustering on alanine and label each frame  
       * classify using coordinates
       * classify using PCA
       * classify using RNN encoded states
 
+* Do clustering on trajectory and label each frame  
+      - clustering directly on coordinates
+      - clustering on rmsd using distance matrix
+      * add PCA to k-means clustering method
+
 * Go parallel
+
+* Basic rnn on trajectory data for predicting the next frame (adapted from Tensorflow ptb model)
 
 ------------
 Done(-):
+
 - Set up Docker image using Dockerfile
 
 - datareader: Preprocessed protein data from pdb files, including window smoothing and batch partition

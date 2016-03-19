@@ -67,7 +67,7 @@ def load_traj(protein, num_files=1):
 
 def load_data(data_para,rescale=False,store_ref=False):
     '''   
-    Read trajectory data and preprocess.
+    Read trajectory data and preprocess for seq2seq training and encoding
     
     Args:
         - data_para: protein_name,num_files,window_size,seq_size
