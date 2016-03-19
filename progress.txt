@@ -9,7 +9,10 @@ To Do(*):
       - generate alanine simulation data (using NAMD)
       - Figure out the error of installing OpenMM using Dockerfile 
         (abandoned OpenMM because of nan error in integration)
-      * do rmsd clustering on alanine and label each frame  
+      - do rmsd clustering on alanine and label each frame  
+      * classify using coordinates
+      * classify using PCA
+      * classify using RNN encoded states
 
 * Go parallel
 
