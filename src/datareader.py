@@ -70,7 +70,10 @@ def load_data(data_para,rescale=False,store_ref=False):
     Read trajectory data and preprocess for seq2seq training and encoding
     
     Args:
-        - data_para: protein_name,num_files,window_size,seq_size
+        - data_para: protein_name,num_files,window_size,seq_size,sliding
+          sliding:
+            number of frames each sequence window slides forward 
+            If == 0, no sliding, which means jumping to the next new frame
         - rescale(default=False)
             If True, rescale the coordinates to [-1,1] using the maximum range of the data.
         - store_ref(default=False)
@@ -84,7 +87,7 @@ def load_data(data_para,rescale=False,store_ref=False):
     '''
 
     # load the trajectory
-    protein, num_files, window_size, seq_size = data_para
+    protein, num_files, window_size, seq_size, sliding = data_para
     traj = load_traj(protein,num_files)
 
     # bounds for rescaling
@@ -112,7 +115,12 @@ def load_data(data_para,rescale=False,store_ref=False):
     data = []
 #    seq_size = len(traj)//window_size//batch_size # this is for a long seq
 #    print seq_size
-    for i in xrange(0,traj.n_frames,window_size*seq_size):
+
+    # deal with sliding
+    if sliding==0:
+        sliding = seq_size
+
+    for i in xrange(0,traj.n_frames,window_size*sliding):
         coords = []
         for j in xrange(i,i+window_size*seq_size, window_size):
             xyz_ave = np.mean(traj[j:j+window_size].xyz,axis=0)

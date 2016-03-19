@@ -8,9 +8,10 @@ To Do(*):
       - generate alanine simulation data (using NAMD)
       - Figure out the error of installing OpenMM using Dockerfile 
         (abandoned OpenMM because of nan error in integration)
-      * classify using coordinates
+      - classify using coordinates
       * classify using PCA
       * classify using RNN encoded states
+        * nan problem with the training (both the parameters and losses become nan)
 
 * Do clustering on trajectory and label each frame  
       - clustering directly on coordinates

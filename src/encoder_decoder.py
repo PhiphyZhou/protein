@@ -12,6 +12,7 @@ import os
 import random
 import sys
 import time
+import gc
 
 import tensorflow.python.platform
 
@@ -28,27 +29,28 @@ import datareader as dr
 ### Modify the following parameters for experiments ###
 
 ## Data inputs ##
-num_files = 100 # number of dcd files we want to analyze, for bpti data 
+num_files = 1 # number of dcd files we want to analyze, for bpti data 
 #protein_name = "bpti"
 protein_name = "alanine"
 window_size = 1 # number of frames to be averaged
-seq_size = 4 # number of averaged frames in a sequence
-data_para = (protein_name,num_files,window_size,seq_size)
+seq_size = 3 # number of averaged frames in a sequence (>1)
+sliding = 1 # sliding for sequence 
+data_para = (protein_name,num_files,window_size,seq_size,sliding)
 
 ## Model inputs ##
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(4,4)] # all sequences will be of the same length
+_buckets = [(seq_size,seq_size)] # all sequences will be of the same length
 feature_size = 0 # to be decided after reading training data
-hidden_size = 10
-num_layers = 2
+hidden_size = 10 # dimension of encoded states
+num_layers = 1 
 max_gradient_norm = 1.0
 batch_size = 5
 learning_rate = 0.5
 learning_rate_decay_factor = 0.9
 train_dir = "/output/"+protein_name
 steps_per_checkpoint = 5
-max_steps = 1000 # the maximum number of steps for each training
+max_steps = 100 # the maximum number of steps for each training
 min_learning_rate = 0.01 # the minimum learning rate for terminating the training
 # num_steps = 3 # number of depth of unroll
 
@@ -142,8 +144,9 @@ def train():
                                                  target_weights, bucket_id, True)
                     eval_loss = np.mean(eval_losses)
                     print("  eval: bucket %d loss %.2f" % (bucket_id, eval_loss))
-                sys.stdout.flush()
-
+                    sys.stdout.flush()
+    print("training completed")
+    gc.collect()
 
 def encode():
     ''' given a set sequences, output their encoded states
@@ -156,13 +159,13 @@ def encode():
 #    feature_size = len(data[0][0])
     data_set,_,_ = get_data(1.0) 
 #    print(data_set)
-    print("# of samples: ",len(data_set[0]))
+#    print("# of samples: ",len(data_set[0]))
 
     with tf.Session() as sess:
         # Create model and load parameters.
         model = create_model(sess, False)
+        print("encoding model created")
 
-        encoded_states = []
         bucket_id = 0 
         # Get encoded states
         encoder_inputs, decoder_inputs, target_weights = model.get_batch(
@@ -174,7 +177,7 @@ def encode():
         print(states)
         print(np.shape(states))
 
-    return encoded_states
+    return states
 
 def get_data(train_portion=0.7):
     ''' put the protein data into bucketes and split into train, dev, test sets
@@ -256,8 +259,8 @@ def self_test():
         print("average loss: ",np.mean(losses))
 
 def main(_):
-    train()
-#    encode()
+#    train()
+    encode()
 #    self_test()
 
 if __name__ == "__main__":

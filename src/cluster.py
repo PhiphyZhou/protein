@@ -11,7 +11,7 @@ import pickle
 import datareader as dr
 
 protein = "alanine"
-K = 3 # number of clusters
+K = 4 # number of clusters
 
 def k_means(traj, K):
     ''' 
