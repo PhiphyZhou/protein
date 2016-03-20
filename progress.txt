@@ -11,7 +11,8 @@ To Do(*):
       - classify using coordinates
       * classify using PCA
       * classify using RNN encoded states
-        * nan problem with the training (both the parameters and losses become nan)
+        - nan problem with the training 
+         (It's related to sliding out of data range)
 
 * Do clustering on trajectory and label each frame  
       - clustering directly on coordinates

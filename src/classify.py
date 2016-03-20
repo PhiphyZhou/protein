@@ -10,9 +10,9 @@ import numpy as np
 
 import datareader as dr
 from encoder_decoder import encode
+from config import *
 
-# global variables
-protein = "alanine"
+# choose a classifier
 classifier = KNeighborsClassifier() # knn works best for alanine coords
 #classifier = RandomForestClassifier()
 #classifier = AdaBoostClassifier()
@@ -52,7 +52,13 @@ def main(protein,clf,encoding=False):
     # get labels
     with open("/output/"+protein+"/labels","r") as lb:
         Y = np.asarray(pickle.load(lb))
-#    print labels
+    if encoding==True:
+        # need to match the number of sequences 
+        end = -seq_size+1
+        if end == 0:
+            end = Y.size
+        Y = Y[0:end:sliding]
+#    print Y
 
     # training and cross validation
     data_scores = cross_val_score(clf,X,Y,cv=int(fold))

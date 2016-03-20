@@ -19,9 +19,6 @@ from tensorflow.models.rnn import seq2seq
 from tensorflow.python.ops.rnn_cell import *
 from tensorflow.python.ops.rnn import *
 
-# tf.flags.DEFINE_string("data_path", None, "data_path")
-# FLAGS = tf.flags.FLAGS
-# 
 class LSTMModel(object):
     ''' The basic SLTM model '''
     def __init__(self, is_training, config):

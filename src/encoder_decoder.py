@@ -24,41 +24,11 @@ import seq2seq_model
 from tensorflow.python.platform import gfile
 
 import datareader as dr
-
-##################### TUNING PARAMETERS ###########################
-### Modify the following parameters for experiments ###
-
-## Data inputs ##
-num_files = 1 # number of dcd files we want to analyze, for bpti data 
-#protein_name = "bpti"
-protein_name = "alanine"
-window_size = 1 # number of frames to be averaged
-seq_size = 3 # number of averaged frames in a sequence (>1)
-sliding = 1 # sliding for sequence 
-data_para = (protein_name,num_files,window_size,seq_size,sliding)
-
-## Model inputs ##
-# We use a number of buckets and pad to the closest one for efficiency.
-# See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(seq_size,seq_size)] # all sequences will be of the same length
-feature_size = 0 # to be decided after reading training data
-hidden_size = 10 # dimension of encoded states
-num_layers = 1 
-max_gradient_norm = 1.0
-batch_size = 5
-learning_rate = 0.5
-learning_rate_decay_factor = 0.9
-train_dir = "/output/"+protein_name
-steps_per_checkpoint = 5
-max_steps = 100 # the maximum number of steps for each training
-min_learning_rate = 0.01 # the minimum learning rate for terminating the training
-# num_steps = 3 # number of depth of unroll
-
-########################################################
+from config import *
 
 def create_model(session, forward_only):
     """Create translation model and initialize or load parameters in session."""
-    model = seq2seq_model.Seq2SeqModel(feature_size, _buckets,
+    model = seq2seq_model.Seq2SeqModel(feature_size, buckets,
             hidden_size, num_layers, max_gradient_norm, batch_size,
             learning_rate, learning_rate_decay_factor,
             forward_only=forward_only)
@@ -76,7 +46,7 @@ def train():
     """Train an encoder for learning the hidden state of a sequence"""
     train_set, dev_set, _ = get_data()
    
-    train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
+    train_bucket_sizes = [len(train_set[b]) for b in xrange(len(buckets))]
     train_total_size = float(sum(train_bucket_sizes))
 
     # A bucket scale is a list of increasing numbers from 0 to 1 that we'll use
@@ -137,13 +107,13 @@ def train():
                 model.saver.save(sess, checkpoint_path, global_step=model.global_step)
                 step_time, loss = 0.0, 0.0
                 # Run evals on development set and print their losses.
-                for bucket_id in xrange(len(_buckets)):
+                for bucket_id in xrange(len(buckets)):
                     encoder_inputs, decoder_inputs, target_weights = model.get_batch(
                             dev_set, bucket_id, True)
                     _, eval_losses, _ = model.step(sess, encoder_inputs, decoder_inputs,  
                                                  target_weights, bucket_id, True)
                     eval_loss = np.mean(eval_losses)
-                    print("  eval: bucket %d loss %.2f" % (bucket_id, eval_loss))
+                    print("  eval: bucket %d loss %.4f" % (bucket_id, eval_loss))
                     sys.stdout.flush()
     print("training completed")
     gc.collect()
@@ -259,8 +229,8 @@ def self_test():
         print("average loss: ",np.mean(losses))
 
 def main(_):
-#    train()
-    encode()
+    train()
+#    encode()
 #    self_test()
 
 if __name__ == "__main__":

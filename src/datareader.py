@@ -119,8 +119,10 @@ def load_data(data_para,rescale=False,store_ref=False):
     # deal with sliding
     if sliding==0:
         sliding = seq_size
-
-    for i in xrange(0,traj.n_frames,window_size*sliding):
+    
+    # merge windows and slide to make sequances
+    for i in xrange(0,traj.n_frames-window_size*seq_size+1,
+                    window_size*sliding):
         coords = []
         for j in xrange(i,i+window_size*seq_size, window_size):
             xyz_ave = np.mean(traj[j:j+window_size].xyz,axis=0)
@@ -132,6 +134,7 @@ def load_data(data_para,rescale=False,store_ref=False):
                 xyz = xyz_ave.flatten()
             coords.append(xyz) # one sequence
         data.append(coords) 
+        
     return data
 
 def split_train_test(data,frac):

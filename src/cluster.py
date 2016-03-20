@@ -1,5 +1,5 @@
 '''
-Cluster and label the frames with rmsd 
+Cluster and label the frames with coordinates or rmsd 
 '''
 
 import mdtraj as md
@@ -9,9 +9,7 @@ import scipy.cluster.hierarchy as hi
 from scipy.spatial.distance import squareform
 import pickle
 import datareader as dr
-
-protein = "alanine"
-K = 4 # number of clusters
+from config import *
 
 def k_means(traj, K):
     ''' 
@@ -46,8 +44,8 @@ def hierarchy(traj, K):
 
 if __name__ == "__main__":
     traj = dr.load_traj(protein)
-#    labels = k_means(traj,K)
-    labels = hierarchy(traj,K)
+#    labels = k_means(traj,num_states)
+    labels = hierarchy(traj,num_states)
     with open("/output/"+protein+"/labels","w") as lb:
         pickle.dump(labels,lb)
     with open("/output/"+protein+"/labels","r") as lb:
