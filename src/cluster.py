@@ -6,19 +6,34 @@ import mdtraj as md
 import numpy as np
 from scipy.cluster.vq import kmeans2
 import scipy.cluster.hierarchy as hi
+from sklearn.decomposition import PCA
 from scipy.spatial.distance import squareform
 import pickle
 import datareader as dr
 from config import *
 
-def k_means(traj, K):
+def k_means(traj, K, dim_red=None):
     ''' 
-    k-means clustering directly on coordinates. 
+    k-means clustering directly on coordinates.
+    Args:
+        - traj: trajectory object
+        - K: number of clusters
+        - dim_red: int or None. If not None, do PCA
+    Returns:
+        1D array of cluster labels
     '''
     # get flattened coordinates of each frame
     coords = traj.xyz
     coords = np.reshape(coords,(len(coords),-1))
-    # print(coords.shape)
+    print(coords.shape)
+
+    # PCA
+    if dim_red!=None:    
+        pca = PCA(dim_red)
+        coords = pca.fit(coords).transform(coords)
+        print(coords.shape)
+
+
 
     # do k-means clustering 
     print("clustering...")
@@ -44,12 +59,13 @@ def hierarchy(traj, K):
 
 if __name__ == "__main__":
     traj = dr.load_traj(protein)
-#    labels = k_means(traj,num_states)
+#    labels = k_means(traj,num_states,dim_red=10)
     labels = hierarchy(traj,num_states)
+    print labels
     with open("/output/"+protein+"/labels","w") as lb:
         pickle.dump(labels,lb)
-    with open("/output/"+protein+"/labels","r") as lb:
-        print(pickle.load(lb))
+#    with open("/output/"+protein+"/labels","r") as lb:
+#        print(pickle.load(lb))
 
 
 

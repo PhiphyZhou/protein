@@ -5,6 +5,8 @@ standard classification methods
 from sklearn.cross_validation import cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.decomposition import PCA
+
 import pickle
 import numpy as np
 
@@ -18,37 +20,35 @@ classifier = KNeighborsClassifier() # knn works best for alanine coords
 #classifier = AdaBoostClassifier()
 fold = 5 # number of folds for cross validation
 
-def train(clf, features, labels):
-    '''
-    train the classifier 
-    Args:
-        - clf: classifier object to use
-        - features: float 2D array of sample features 
-        - labels: int 1D array of sample labels
-    Returns:
-        - a trained classifier object
-    '''
-
-def main(protein,clf,encoding=False):
+def train(protein,clf,dim_red=None,encoding=False):
     '''
     Args:
         - protein: "bpti" or "alanine", name of the protein
+        - clf: classifier to use
+        - dim_red: int or None. 
+                  if not None, it's the reduced dimension for PCA 
         - encode: if False, classify on coordinates; 
                   if True, classify on encoded hidden states
-        - clf: classifier to use
     '''
-
+    
+    # get features
     if encoding==False:
         # get flattened coordinates of each frame
         traj = dr.load_traj(protein)
         coords = traj.xyz
         coords = np.reshape(coords,(len(coords),-1))
-        X = np.asmatrix(coords)    
+        X = coords    
 #        print coords    
     else:
         # get encoded hidden states
-        X = np.asmatrix(encode())
+        X = encode()
     
+    # use PCA to reduce dimension
+    if dim_red != None:
+        pca = PCA(dim_red)
+        X = pca.fit(X).transform(X)
+#        print X[0]
+
     # get labels
     with open("/output/"+protein+"/labels","r") as lb:
         Y = np.asarray(pickle.load(lb))
@@ -66,8 +66,8 @@ def main(protein,clf,encoding=False):
         (fold, data_scores.mean(), data_scores.std()))
 
 if __name__ == "__main__":
-#    main(protein,classifier)
-    main(protein,classifier,True)
+    train(protein,classifier,dim_red=10)
+#    train(protein,classifier,encoding=True)
 
 
 

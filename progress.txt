@@ -9,15 +9,13 @@ To Do(*):
       - Figure out the error of installing OpenMM using Dockerfile 
         (abandoned OpenMM because of nan error in integration)
       - classify using coordinates
-      * classify using PCA
-      * classify using RNN encoded states
+      - classify using PCA
+      - classify using RNN encoded states
         - nan problem with the training 
          (It's related to sliding out of data range)
-
-* Do clustering on trajectory and label each frame  
-      - clustering directly on coordinates
-      - clustering on rmsd using distance matrix
-      * add PCA to k-means clustering method
+      * classify sequences (including trasitions) instead of frames
+        need to think about how to define sequance labels
+      * generate more alanine data(>10000) and do window smoothing
 
 * Go parallel
 
@@ -50,4 +48,12 @@ Done(-):
     - reverse the order of decoder_inputs
     - print out the encoded states
     - compute a single reconstruction error (not for batches)
-     
+
+- Do clustering on trajectory and label each frame  
+      - clustering directly on coordinates
+      - clustering on rmsd using distance matrix
+      - add PCA to k-means clustering method
+  Note: rmsd clustering works much more consistant with classification
+        than coordinate clustering. 
+
+    
