@@ -2,58 +2,64 @@
 To Do(*): 
 
 * Test classification on the learned features.
-    * do it on alanine data and compare to rmsd clustering result
-      - modify datareader to read the alanine data
-      - deal with data in water with topology.selection function 
-      - generate alanine simulation data (using NAMD)
-      - Figure out the error of installing OpenMM using Dockerfile 
-        (abandoned OpenMM because of nan error in integration)
-      - classify using coordinates
-      - classify using PCA
-      - classify using RNN encoded states
-        - nan problem with the training 
-         (It's related to sliding out of data range)
-      * classify sequences (including trasitions) instead of frames
-        need to think about how to define sequance labels
-      * generate more alanine data(>10000) and do window smoothing
+  * do it on alanine data and compare to rmsd clustering result
+    - modify datareader to read the alanine data
+    - deal with data in water with topology.selection function 
+    - generate alanine simulation data (using NAMD)
+    - Figure out the error of installing OpenMM using Dockerfile 
+    (abandoned OpenMM because of nan error in integration)
+    - classify using coordinates
+    - classify using PCA
+    - classify using RNN encoded states
+    - nan problem with the training 
+     (It's related to sliding out of data range)
+    * classify sequences (including trasitions) instead of frames
+    need to think about how to define sequance labels
+    * generate more alanine data(>10000) and do window smoothing
 
 * Go parallel
 
-* Basic rnn on trajectory data for predicting the next frame (adapted from Tensorflow ptb model)
+* Basic rnn on trajectory data for predicting the next frame 
+  (adapted from Tensorflow ptb model)
 
 ------------
 Done(-):
 
 - Set up Docker image using Dockerfile
 
-- datareader: Preprocessed protein data from pdb files, including window smoothing and batch partition
+- datareader: Preprocessed protein data from pdb files, 
+  including window smoothing and batch partition
 
-- Use sequence-to-sequence model to learn feature encoding of a sequence of frames (adpted from Tensorflow translation model) 
-    - encoder-decoder.train
-      - modify for training on protein data
-    - encoder-decoder.encode: a new function for outputing the states of a given sequence
-      - modify the output of seq2seq_model.step for forward_only==True
-      - write a simpler version for only using the encoder part of the model and input_feed
-    - seq2seq_model.init
-      - redefine loss function in seq2seq_model
-        - debug using simple example to make sure the calculation is correct
-      - rewrite model_with_buckets using a different loss function
-    - Use high-dim self-test data to test new loss function
-    - seq2seq.embedding_attention_seq2seq: used to define seq2seq_f()
-      No need. Can use seq2seq.basic_rnn_seq2seq
-    - seq2seq.model_with_buckets: rewrote it as a new model_with_buckets within seq2seq_model.
-    - encoder-decoder.create_model
-    - seq2seq_model.get_batch
-    - seq2seq_model.step
-    - reverse the order of decoder_inputs
-    - print out the encoded states
-    - compute a single reconstruction error (not for batches)
+- Use sequence-to-sequence model to learn feature encoding 
+  of a sequence of frames (adpted from Tensorflow translation model) 
+  - encoder-decoder.train
+    - modify for training on protein data
+  - encoder-decoder.encode: 
+    a new function for outputing the states of a given sequence
+    - modify the output of seq2seq_model.step for forward_only==True
+    - write a simpler version for only using the encoder part 
+      of the model and input_feed
+  - seq2seq_model.init
+    - redefine loss function in seq2seq_model
+    - debug using simple example to make sure the calculation is correct
+    - rewrite model_with_buckets using a different loss function
+  - Use high-dim self-test data to test new loss function
+  - seq2seq.embedding_attention_seq2seq: used to define seq2seq_f()
+    No need. Can use seq2seq.basic_rnn_seq2seq
+  - seq2seq.model_with_buckets: rewrote it as a new 
+    model_with_buckets within seq2seq_model.
+  - encoder-decoder.create_model
+  - seq2seq_model.get_batch
+  - seq2seq_model.step
+  - reverse the order of decoder_inputs
+  - print out the encoded states
+  - compute a single reconstruction error (not for batches)
 
 - Do clustering on trajectory and label each frame  
-      - clustering directly on coordinates
-      - clustering on rmsd using distance matrix
-      - add PCA to k-means clustering method
-  Note: rmsd clustering works much more consistant with classification
-        than coordinate clustering. 
+  - clustering directly on coordinates
+  - clustering on rmsd using distance matrix
+  - add PCA to k-means clustering method
+Note: rmsd clustering works much more consistant with classification
+      than coordinate clustering. 
 
-    
+  
