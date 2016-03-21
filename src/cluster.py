@@ -33,8 +33,6 @@ def k_means(traj, K, dim_red=None):
     coords = pca.fit(coords).transform(coords)
     print(coords.shape)
 
-
-
   # do k-means clustering 
   print("clustering...")
   centroids, labels = kmeans2(coords,K,iter=100)

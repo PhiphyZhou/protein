@@ -10,7 +10,9 @@ import mdtraj.testing as mdtesting
 import numpy as np
 import pickle, random
 
-def load_traj(protein, num_files=1):
+from config import *
+
+def load_traj(protein):
   '''
   load the trajectory object from dcd files
 
@@ -18,7 +20,7 @@ def load_traj(protein, num_files=1):
     - protein: "bpti" or "alanine"
     - num_files: for bpti only
 
-  Return: traj object
+  Return: trajectory that is aligned and smoothed
   '''
   
   print("loading traj object...")
@@ -28,7 +30,7 @@ def load_traj(protein, num_files=1):
     dcd_path = "/protein-data/bpti-all/bpti-all-"
     pdb_file = "/protein-data/bpti-all.pdb"
     dcd_files = []
-    for i in xrange(num_files):
+    for i in xrange(num_files,file_stride):
       if(i<10):
         num="00"+str(i)
       elif(i<100):
@@ -39,11 +41,25 @@ def load_traj(protein, num_files=1):
       dcd_files.append(dcd_file)
   elif(protein=="alanine"):
     # deal with alanine data
-    dcd_files = "../data/alanine.dcd"  
+    dcd_files = "../data/alanine-1000.dcd"  
     pdb_file = "../data/alanine.pdb"         
   else:
     raise ValueError("Unknown protein name: ",protein)
+
+  traj = traj_from_file(dcd_files,pdb_file)
   
+  # Superpose each frame with the first frame as the reference
+  traj.superpose(traj,0)
+  
+  # smooth the trajectory according to smooth_window
+  traj.smooth(smooth_window)
+  print("Trajectory is smoothed by filter with window size %s" % smooth_window)
+  
+  return traj
+
+def traj_from_file(dcd_files,pdb_file):
+  ''' get the traj object from given dcd and pdb file names
+  '''
   # read trajectories 
   traj = md.load(dcd_files,top=pdb_file)    
   
@@ -61,19 +77,13 @@ def load_traj(protein, num_files=1):
   traj = traj.atom_slice(relevant)
   print(traj)
     
-  # Superpose each frame with the first frame as the reference
-  traj.superpose(traj,0)
   return traj
 
-def load_data(data_para,rescale=False,store_ref=False):
+def load_data(rescale=False,store_ref=False):
   '''   
   Read trajectory data and preprocess for seq2seq training and encoding
   
   Args:
-    - data_para: protein_name,num_files,window_size,seq_size,sliding
-      sliding:
-      number of frames each sequence window slides forward 
-      If == 0, no sliding, which means jumping to the next new frame
     - rescale(default=False)
       If True, rescale the coordinates to [-1,1] using the maximum range of the data.
     - store_ref(default=False)
@@ -87,8 +97,7 @@ def load_data(data_para,rescale=False,store_ref=False):
   '''
 
   # load the trajectory
-  protein, num_files, window_size, seq_size, sliding = data_para
-  traj = load_traj(protein,num_files)
+  traj = load_traj(protein)
 
   # bounds for rescaling
   xyz_max=np.amax(traj.xyz,axis=0)
@@ -117,6 +126,7 @@ def load_data(data_para,rescale=False,store_ref=False):
 #  print seq_size
 
   # deal with sliding
+  global sliding
   if sliding==0:
     sliding = seq_size
   
@@ -134,7 +144,8 @@ def load_data(data_para,rescale=False,store_ref=False):
         xyz = xyz_ave.flatten()
       coords.append(xyz) # one sequence
     data.append(coords) 
-    
+  if window_size>1:
+    print("Frames are averaged by window size %s" % window_size)
   return data
 
 def split_train_test(data,frac):
@@ -202,23 +213,11 @@ def data_iterator(raw_data,num_steps):
 
 
 if __name__=="__main__":
-  num_files = 1
-  protein_name = "alanine"
-#  protein_name = "bpti"
-  window_size = 1 # number of frames to be averaged
-  seq_size = 2 # number of averaged frames in a sequence
-  data_para = (protein_name,num_files,window_size,seq_size)
-  data = load_data(data_para)
-
-#  train, test = split_train_test(data,0.7)
-#  for step, (x, y) in enumerate(data_iterator(test,num_steps)):
-#    print "x: \n", x
-#    print "y: \n", y
-#  print len(train),len(test)
-#  print np.amax(data,axis=(0,1,2))
-#  print np.amin(data,axis=(0,1,2))
-#  print data[0]
-
+  # simply check the trajectory of the dcd file 
+#  traj_from_file("/protein/data/alanine-1000.dcd",
+#                "/protein/data/alanine.pdb")
+#  load_traj(protein) 
+  load_data()
 
 
 
