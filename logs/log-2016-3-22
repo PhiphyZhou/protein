@@ -56,7 +56,7 @@ max_steps = 1000 # the maximum number of steps for each training
 	Accuracy with 5 folds: 0.96 (+/- 0.01)
 	PCA(dim_red=10) does not improve the result.
 
-	- seq2seq (use sequence to encode the first 
+	- seq2seq (use sequence to encode the first frame) 
 	training:
 	global step 795 learning rate 0.0101 step-time 0.05 loss 0.01
 	Encoded states: (996, 10)

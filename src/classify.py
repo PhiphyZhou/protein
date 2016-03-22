@@ -57,8 +57,8 @@ def train(protein,clf,dim_red=None,encoding=False):
     end = -seq_size*window_size+1
     if end == 0:
       end = Y.size
-    Y = Y[0:end:sliding*window_size]
-#    Y = Y[-end::sliding*window_size]
+    Y = Y[0:end:sliding*window_size] # compare with the first frame
+#    Y = Y[-end::sliding*window_size] # compare with the last frame
 #  print Y
 
   # training and cross validation
