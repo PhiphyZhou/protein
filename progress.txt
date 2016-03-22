@@ -2,29 +2,31 @@
 To Do(*): 
 
 * Test classification on the learned features.
-  do it on alanine data and compare to rmsd clustering result
-	- modify datareader to read the alanine data
-	- deal with data in water with topology.selection function 
-	- generate alanine simulation data (using NAMD)
-	- Figure out the error of installing OpenMM using Dockerfile 
-  	(abandoned OpenMM because of nan error in integration)
-	- classify using coordinates
-	- classify using PCA
-	- classify using RNN encoded states
-	- nan problem with the training 
-	  (It's related to sliding out of data range)
-	* classify sequences (including trasitions) instead of frames
-  	Need to think about how to define sequance labels
-	- generate more alanine data(>1000) and do filter smoothing
+ do it on alanine data and compare to rmsd clustering result
+  - modify datareader to read the alanine data
+  - deal with data in water with topology.selection function 
+  - generate alanine simulation data (using NAMD)
+  - Figure out the error of installing OpenMM using Dockerfile 
+    (abandoned OpenMM because of nan error in integration)
+  - classify using coordinates
+  - classify using PCA
+  - classify using RNN encoded states
+  - nan problem with the training 
+    (It's related to sliding out of data range)
+  * classify sequences (including trasitions) instead of frames
+    Need to think about how to define sequance labels
+  - generate more alanine data(>1000) and do filter smoothing
 
-* do classification on bpti data
-	* do clustering with rmsd to generate labels on 100 files (each 40)
-	* compare classification using PCA and encoder on 100 files
+* Do classification on bpti data
+  * do clustering with rmsd to generate labels on 100 files (each 40)
+  * compare classification using PCA and encoder on 100 files
 
+* Single frame based auto-encoder (only need minor modification on RNN)
+	
 * Go parallel
-	* learn to adjust number of threads in tensorflow
-	* assign nodes for training on damsl or Marcc
-	* reading data in parallel
+  * learn to adjust number of threads in tensorflow
+  * assign nodes for training on damsl or Marcc
+  * reading data in parallel
 
 * Basic rnn on trajectory data for predicting the next frame 
   (adapted from Tensorflow ptb model)
@@ -34,15 +36,14 @@ Done(-):
 
 - Set up Docker image using Dockerfile
 
-- datareader: Preprocessed protein data from pdb files, 
-  including window smoothing and batch partition
+- datareader: Preprocessed protein data from pdb and dcd files 
 
 - Use sequence-to-sequence model to learn feature encoding 
   of a sequence of frames (adpted from Tensorflow translation model) 
   - encoder-decoder.train
     - modify for training on protein data
   - encoder-decoder.encode: 
-    a new function for outputing the states of a given sequence
+   a new function for outputing the states of a given sequence
     - modify the output of seq2seq_model.step for forward_only==True
     - write a simpler version for only using the encoder part 
       of the model and input_feed

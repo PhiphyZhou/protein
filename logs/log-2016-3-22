@@ -1,3 +1,5 @@
+3016-3-22
+
 '''
 ##################### Global PARAMETERS ###########################
 ### Modify the following parameters for experiments ###
@@ -32,7 +34,6 @@ buckets = [(seq_size,seq_size)] # all sequences will be of the same length
 feature_size = 0 # to be decided after reading training data
 hidden_size = 5 # dimension of encoded states
 num_layers = 2 # total hidden dimension=hidden_size*num_layers 
-# num_steps = 3 # number of depth of unroll for continuous sequence
 
 ## Training parameters ##
 train_dir = "/output/"+protein # directory for model checkpoints
@@ -44,7 +45,28 @@ min_learning_rate = 0.01 # the minimum learning rate for terminating the trainin
 learning_rate_decay_factor = 0.9 # rate <- decay_factor*rate
 steps_per_checkpoint = 5
 max_steps = 1000 # the maximum number of steps for each training
+# num_steps = 3 # number of depth of unroll
 
 ########################################################
+
+############ Results #################
+	- knn(k=5)
+	<mdtraj.Trajectory with 1000 frames, 22 atoms, 1 residues, and unitcells>
+	Trajectory is smoothed by filter with window size 10
+	Accuracy with 5 folds: 0.96 (+/- 0.01)
+	PCA(dim_red=10) does not improve the result.
+
+	- seq2seq (use sequence to encode the first 
+	training:
+	global step 795 learning rate 0.0101 step-time 0.05 loss 0.01
+	Encoded states: (996, 10)
+	classification:
+	Accuracy with 5 folds: 0.78 (+/- 0.04)
+
+
+
+
+
+
 
 

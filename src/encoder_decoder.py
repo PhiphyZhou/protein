@@ -48,7 +48,7 @@ def create_model(session, forward_only):
 
 def train():
 	"""Train an encoder for learning the hidden state of a sequence"""
-	train_set, dev_set, _ = get_data()
+	train_set, dev_set, _ = get_data(train_portion)
 	 
 	train_bucket_sizes = [len(train_set[b]) for b in xrange(len(buckets))]
 	train_total_size = float(sum(train_bucket_sizes))
@@ -90,8 +90,8 @@ def train():
 			step_time += (time.time() - start_time) / steps_per_checkpoint
 			loss += step_loss / steps_per_checkpoint
 			current_step += 1
-			print("step %d:\nlosses: %s \ngrad_norms: %s" % (
-						current_step, step_losses, grad_norm))
+#			print("step %d:\nlosses: %s \ngrad_norms: %s" % (
+#						current_step, step_losses, grad_norm))
 			
 
 			# Once in a while, we save checkpoint, print statistics, and run evals.

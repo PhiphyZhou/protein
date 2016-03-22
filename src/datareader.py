@@ -41,7 +41,7 @@ def load_traj(protein):
       dcd_files.append(dcd_file)
   elif(protein=="alanine"):
     # deal with alanine data
-    dcd_files = "../data/alanine-1000.dcd"  
+    dcd_files = "../data/alanine"+suffix+".dcd"  
     pdb_file = "../data/alanine.pdb"         
   else:
     raise ValueError("Unknown protein name: ",protein)
@@ -52,8 +52,9 @@ def load_traj(protein):
   traj.superpose(traj,0)
   
   # smooth the trajectory according to smooth_window
-  traj.smooth(smooth_window)
-  print("Trajectory is smoothed by filter with window size %s" % smooth_window)
+  if smooth_window>1:
+    traj.smooth(smooth_window)
+    print("Trajectory is smoothed by filter with window size %s" % smooth_window)
   
   return traj
 
@@ -214,10 +215,10 @@ def data_iterator(raw_data,num_steps):
 
 if __name__=="__main__":
   # simply check the trajectory of the dcd file 
-#  traj_from_file("/protein/data/alanine-1000.dcd",
-#                "/protein/data/alanine.pdb")
+  traj_from_file("/protein/data/alanine-100.dcd",
+                "/protein/data/alanine.pdb")
 #  load_traj(protein) 
-  load_data()
+#  load_data()
 
 
 
