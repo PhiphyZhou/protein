@@ -13,15 +13,14 @@ To Do(*):
   - classify using RNN encoded states
   - nan problem with the training 
     (It's related to sliding out of data range)
+  * generate more alanine data(10000) ---waiting Marcc job id:5522858
+  * cluster the alanine-10000 data with sequence variance
   * classify sequences (including trasitions) instead of frames
-    Need to think about how to define sequance labels
-  - generate more alanine data(>1000) and do filter smoothing
+    (anyway to distinguish transition states?)
 
 * Do classification on bpti data
   * do clustering with rmsd to generate labels on 100 files (each 40)
   * compare classification using PCA and encoder on 100 files
-
-* Single frame based auto-encoder (only need minor modification on RNN)
 	
 * Go parallel
   * learn to adjust number of threads in tensorflow
@@ -30,6 +29,9 @@ To Do(*):
 
 * Basic rnn on trajectory data for predicting the next frame 
   (adapted from Tensorflow ptb model)
+
+* Tensorflow code polishing
+  * add summary writters for Tensorboard to use
 
 ------------
 Done(-):
