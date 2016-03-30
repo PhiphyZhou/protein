@@ -62,12 +62,15 @@ def hierarchy(traj, K):
 	labels = hi.fcluster(linkage, t=K, criterion='maxclust')
 	return labels
 
+def seq_cluster(traj, seq_len,K):
+    
+
 if __name__ == "__main__":
 	traj = dr.load_traj(protein)
 #  labels = k_means(traj,num_states,dim_red=10)
 	labels = hierarchy(traj,num_states)
 	print labels
-	with open("/output/"+protein+"/labels","w") as lb:
+	with open("/output/"+protein+"/labels"+suffix,"w") as lb:
 		pickle.dump(labels,lb)
 #  with open("/output/"+protein+"/labels","r") as lb:
 #		 print(pickle.load(lb))

@@ -29,8 +29,8 @@ simulation.context.setPositions(pdb.xyz[0])
 simulation.context.setVelocitiesToTemperature(330*unit.kelvin)
 
 if not os.path.exists('/output/alanine/ala.dcd'):
-  simulation.reporters.append(mdtraj.reporters.DCDReporter('/output/alanine/ala.dcd', rec_interval))
-  print "begin simulation"
-  simulation.step(frame_num*rec_interval)
+    simulation.reporters.append(mdtraj.reporters.DCDReporter('/output/alanine/ala.dcd', rec_interval))
+    print "begin simulation"
+    simulation.step(frame_num*rec_interval)
 else:
-  raise ValueError("data file /output/alanine/ala.dcd already exists")
+    raise ValueError("data file /output/alanine/ala.dcd already exists")
