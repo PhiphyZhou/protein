@@ -1,0 +1,8 @@
+generated 10000 alanine samples but the clustered label is highly unbalanced: 
+[   0   17 3728 6254    1]
+
+another 10000:
+[   0   83 5804    2 4111]
+
+1000:
+[  0 348  28  71 553]

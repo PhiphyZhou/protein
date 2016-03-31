@@ -68,7 +68,7 @@ def train():
         
         # This is the training loop.
         step_time,loss = 0.0, 0.0
-                total_time = time.time()
+        total_time = time.time()
         current_step = 0
         previous_losses = []
         print("Begin training")

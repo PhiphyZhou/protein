@@ -215,7 +215,7 @@ def data_iterator(raw_data,num_steps):
 
 if __name__=="__main__":
     # simply check the trajectory of the dcd file 
-    traj_from_file("/protein/data/alanine-10000.dcd",
+    traj_from_file("/protein/data/alanine-10000-1.dcd",
                                 "/protein/data/alanine.pdb")
 #  load_traj(protein) 
 #  load_data()

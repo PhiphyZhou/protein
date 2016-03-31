@@ -67,8 +67,8 @@ def train(protein,clf,dim_red=None,encoding=False):
         (fold, data_scores.mean(), data_scores.std()))
 
 if __name__ == "__main__":
-#  train(protein,classifier)
-    train(protein,classifier,encoding=True)
+    train(protein,classifier)
+#    train(protein,classifier,encoding=True)
 
 
 
