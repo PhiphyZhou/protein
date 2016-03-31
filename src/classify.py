@@ -50,7 +50,7 @@ def train(protein,clf,dim_red=None,encoding=False):
 #        print X[0]
 
     # get labels
-    with open("/protein/data/"+protein+"-labels"+suffix,"r") as lb:
+    with open("/output/"+protein+"/labels"+suffix,"r") as lb:
         Y = np.asarray(pickle.load(lb))
     if encoding==True:
         # need to match the number of sequences 
@@ -67,8 +67,8 @@ def train(protein,clf,dim_red=None,encoding=False):
         (fold, data_scores.mean(), data_scores.std()))
 
 if __name__ == "__main__":
-    train(protein,classifier)
-#    train(protein,classifier,encoding=True)
+#    train(protein,classifier)
+    train(protein,classifier,encoding=True)
 
 
 

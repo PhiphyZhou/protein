@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import pickle
 import datareader as dr
 from config import *
+import sys
 
 def k_means(traj, K, dim_red=None):
     ''' 
@@ -32,6 +33,7 @@ def k_means(traj, K, dim_red=None):
     if dim_red!=None:  
         pca = PCA(dim_red)
         coords = pca.fit(coords).transform(coords)
+        print("using PCA")
         print(coords.shape)
 
     # do k-means clustering 
@@ -70,28 +72,34 @@ def seq_cluster(traj, seq_len,K):
         - traj: the trajectory object
         - seq_len: length of each sequence
         - K: number of clusters
+    Return: labels
     '''
     
     # get flattened coordinates of each frame
     coords = traj.xyz
     coords = np.reshape(coords,(len(coords),-1))
-    
+#    print np.shape(coords) 
     # compute the covarance of each sequence as the features
-    seq_data = []
+    seqs = []
     for i in xrange(0,len(coords),seq_len):
-        covm = np.cov(coords[i:i+seq_len]) # covariance matrix
-        seq_data.append(np.diag(covm))
+        # covariance matrix of the coordinates
+        covm = np.cov(np.transpose(coords[i:i+seq_len]))         
+#        print np.shape(covm)
+        seqs.append(np.diag(covm))
+#    print np.shape(seq_data)
+
+    centroids, labels = kmeans2(np.asarray(seqs),K,iter=100)
+    return labels
 
 if __name__ == "__main__":
 
-    task = 2
+    task = int(sys.argv[1])
 
     if task==1:
         # do clustering and save the label file
         traj = dr.load_traj(protein)
-    #  labels = k_means(traj,num_states,dim_red=10)
-        labels = hierarchy(traj,num_states)
-    #   print labels
+        labels = k_means(traj,num_states,dim_red=10)
+#        labels = hierarchy(traj,num_states)
         with open("/output/"+protein+"/labels"+suffix,"w") as lb:
             pickle.dump(labels,lb)
 
@@ -101,10 +109,22 @@ if __name__ == "__main__":
            labels = pickle.load(lb)
 #        for l in labels:
 #            print(l)    
-        print(labels)
 
-    # count the number of each label from 0 to K
+    elif task==3:
+        # cluster the sequences
+        traj = dr.load_traj(protein)
+        labels = seq_cluster(traj,seq_size,num_states)
+
+# count the number of each label from 0 to K
+    print labels
     print(np.bincount(labels))
+
+
+
+
+
+
+
 
 
 

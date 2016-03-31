@@ -42,6 +42,8 @@ def create_model(session, forward_only):
         model.saver.restore(session, ckpt.model_checkpoint_path)
     else:
         print("Created model with fresh parameters.")
+        if not os.path.exists(train_dir):
+            os.makedirs(train_dir)
         session.run(tf.initialize_all_variables())
     return model
 
@@ -121,7 +123,7 @@ def train():
                     print("  eval: bucket %d loss %.4f" % (bucket_id, eval_loss))
                     sys.stdout.flush()
         total_time = time.time() - total_time
-    print("training completed. Total time used: "+total_time)
+    print("training completed. Total time used: "+str(total_time))
     gc.collect()
 
 def encode():
