@@ -1,23 +1,10 @@
 -------------
 To Do(*): 
 
-* Test classification on the learned features.
- do it on alanine data and compare to rmsd clustering result
-  - modify datareader to read the alanine data
-  - deal with data in water with topology.selection function 
-  - generate alanine simulation data (using NAMD)
-  - Figure out the error of installing OpenMM using Dockerfile 
-    (abandoned OpenMM because of nan error in integration)
-  - classify using coordinates
-  - classify using PCA
-  - classify using RNN encoded states
-  - nan problem with the training 
-    (It's related to sliding out of data range)
-  - generate more alanine data(10000) ---waiting Marcc job id:5522858
-    The label is too unbalanced, do it again. Submitted batch job 5626764
-  - cluster the alanine-10000 data with sequence variance
-  * classify sequences (including trasitions) instead of frames
-    (anyway to distinguish transition states?)
+* Study with Alanine data:
+  * What clustering method makes more sense 
+    (hierarchical using rmsd,k-means on coords, PCA...)
+  * Is sequence clustering consistant with frame clustering in representing state and transition?
 
 * Do classification on bpti data
   * do clustering with rmsd to generate labels on 100 files (each 40)
@@ -72,5 +59,25 @@ Done(-):
   - add PCA to k-means clustering method
 Note: rmsd clustering works much more consistant with classification
       than coordinate clustering. 
+
+- Test classification on the learned features.(finish major code)
+ do it on alanine data and compare to rmsd clustering result
+  - modify datareader to read the alanine data
+  - deal with data in water with topology.selection function 
+  - generate alanine simulation data (using NAMD)
+  - Figure out the error of installing OpenMM using Dockerfile 
+    (abandoned OpenMM because of nan error in integration)
+  - classify using coordinates
+  - classify using PCA
+  - classify using RNN encoded states
+  - nan problem with the training 
+    (It's related to sliding out of data range)
+  - generate more alanine data(10000) ---waiting Marcc job id:5522858
+    The label is too unbalanced, do it again. Submitted batch job 5626764
+  - cluster the alanine-10000 data with sequence variance
+  - classify sequences (including trasitions) instead of frames
+    (anyway to distinguish transition states? - using variance)
+  - Repeat Ben's method of clustering
+
 
   

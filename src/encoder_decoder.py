@@ -2,7 +2,7 @@
 This file is adapted from the Tensorfile code:
 https://github.com/tensorflow/tensorflow/blob/master/tensorflow/models/rnn/translate/translate.py
 
-Usage: 
+Usage:(for now no arguments, only do training) 
 python encoder_decoder <mode>
 <mode> = train, encode, self-test
 """
@@ -247,4 +247,5 @@ def main(mode):
         print("unrecognized mode. \nShould be one of:\ntrain,encode,self-test")
 
 if __name__ == "__main__":
-        main(sys.argv[1])
+#        main(sys.argv[1])
+    main("train")

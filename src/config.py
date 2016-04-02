@@ -11,11 +11,13 @@ cluster
 '''
 ## Data selection ##
 protein = "alanine"
-suffix = "-10000" # alanine file suffix for number of samples
+suffix = "-10000-1" # alanine file suffix for number of samples
+
 #protein = "bpti"
 num_files = 4000 # number of dcd files we want to analyze, for bpti data 
 file_stride = 40 # files to increment when reading bpti dcd files
-num_states = 4 # number of states for the protein
+
+num_states = 2 # number of states for the protein
 
 ## Data configuration ##
 # smoothing parameters

@@ -20,7 +20,7 @@ classifier = KNeighborsClassifier() # knn works best for alanine coords
 #classifier = AdaBoostClassifier()
 fold = 5 # number of folds for cross validation
 
-def train(protein,clf,dim_red=None,encoding=False):
+def train(protein,clf,dim_red=None,encoding=False,single_frame=False):
     '''
     Args:
         - protein: "bpti" or "alanine", name of the protein
@@ -29,6 +29,7 @@ def train(protein,clf,dim_red=None,encoding=False):
                     if not None, it's the reduced dimension for PCA 
         - encode: if False, classify on coordinates; 
                     if True, classify on encoded hidden states
+        - single_frame: classify as single frames or sequences. 
     '''
     
     # get features
@@ -51,8 +52,9 @@ def train(protein,clf,dim_red=None,encoding=False):
 
     # get labels
     with open("/output/"+protein+"/labels"+suffix,"r") as lb:
+#    with open("/protein/data/"+protein+"-labels"+suffix) as lb:
         Y = np.asarray(pickle.load(lb))
-    if encoding==True:
+    if encoding==True and single_frame==True:
         # need to match the number of sequences 
         end = -seq_size*window_size+1
         if end == 0:
@@ -68,7 +70,7 @@ def train(protein,clf,dim_red=None,encoding=False):
 
 if __name__ == "__main__":
 #    train(protein,classifier)
-    train(protein,classifier,encoding=True)
+    train(protein,classifier,encoding=True,single_frame=True)
 
 
 

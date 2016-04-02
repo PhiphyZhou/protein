@@ -12,6 +12,8 @@ Accuracy with 5 folds: 0.96 (+/- 0.01)
 
 -----------------------------------
 - Using k-means clustering instead makes it more balanced and much faster:
+compare single frame classification.
+
 alanine-10000:
 [1812 2647 2025 3516]
 Classification with coordinates:
@@ -28,14 +30,19 @@ alanine-1000:
 Accuracy with 5 folds: 0.91 (+/- 0.02)
 
 --------------------------------
-Cluster on sequences using variance:
-seq_size = 4
+Cluster and classify on sequences using variance:
+seq_size = 4, sliding = 4
 
 alanine-1000: 
 [100  56  47  47]
+classify with variance: Accuracy with 5 folds: 0.81 (+/- 0.05)
+classify with encoder: Accuracy with 5 folds: 0.57 (+/- 0.06)
 
 alanine-10000:
 [901 769 172 658]
+classify with variance: Accuracy with 5 folds: 0.90 (+/- 0.01)
+classify with encoder: Accuracy with 5 folds: 0.61 (+/- 0.02)
+
 ------------------------------
 alanine-10000 encoder parameters:
 
