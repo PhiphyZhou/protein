@@ -1,0 +1,17 @@
+Alanine clustering with 2 dihedral angles:
+(see the plots of the angle distributions)
+Given initial centers: [55,48], [-77,138], [-77, -39], [60, -72] 
+
+alanine-10000
+[  70 4147 5765   18]
+classify using coordinates:
+Accuracy with 5 folds: 0.95 (+/- 0.01)
+classify using encoding for single frames (sliding==1):
+Accuracy with 5 folds: 0.86 (+/- 0.01)
+
+alanine-10000-1
+[ 105 4587 5254   54]
+classify using coordinates:
+Accuracy with 5 folds: 0.95 (+/- 0.01)
+classify using encoding for single frames (sliding==1):
+Accuracy with 5 folds: 0.89 (+/- 0.00)

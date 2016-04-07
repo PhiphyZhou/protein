@@ -5,6 +5,7 @@ Cluster and label the frames with coordinates or rmsd
 import mdtraj as md
 import numpy as np
 from scipy.cluster.vq import kmeans2
+from sklearn.cluster import KMeans as kmeans
 import scipy.cluster.hierarchy as hi
 from sklearn.decomposition import PCA
 from sklearn.cross_validation import cross_val_score
@@ -106,19 +107,23 @@ def seq_cluster(traj,seq_len,stride,K):
 def label_alanine(traj):
     ''' use dihedral angles to cluster and label alanine dipeptide
     '''
-    # atoms for calculating psi and phi angles
+    # calculating psi and phi angles
     psi_atoms = [6,8,14,16]
     phi_atoms = [4,6,8,14]
-    indices = np.asarray([psi_atoms,phi_atoms])
+    indices = np.asarray([phi_atoms,psi_atoms])
     dihedrals = md.compute_dihedrals(traj, indices)
 #    print(dihedrals)
     trans_di = np.transpose(dihedrals)
 #    print(trans_di)
     plt.scatter(trans_di[0],trans_di[1])
-    plt.xlabel('psi')
-    plt.ylabel('phi')
+    plt.xlabel('phi')
+    plt.ylabel('psi')
     plt.savefig("/output/tempplot")
-    centroids, labels = kmeans2(dihedrals,4,iter=100)
+
+    # do clustering with given initial centers
+    centers = np.array([[55,48],[-77,138],[-77, -39],[60, -72]])*np.pi/180.0
+    clu = kmeans(n_clusters=4,init=centers)
+    labels = clu.fit_predict(dihedrals)
     return labels
 
 if __name__ == "__main__":
@@ -150,6 +155,9 @@ if __name__ == "__main__":
         # use 2 dihedrals to label alanine dipeptide
         traj = dr.load_traj(protein)
         labels = label_alanine(traj)
+        with open("/output/"+protein+"/labels"+suffix,"w") as lb:
+            pickle.dump(labels,lb)
+
 
 # count the number of each label from 0 to K
     print labels
