@@ -102,6 +102,23 @@ def seq_cluster(traj,seq_len,stride,K):
 
     return labels
 
+
+def label_alanine(traj):
+    ''' use dihedral angles to cluster and label alanine dipeptide
+    '''
+    # atoms for calculating psi and phi angles
+    psi_atoms = [6,8,14,16]
+    phi_atoms = [4,6,8,14]
+    indices = np.asarray([psi_atoms,phi_atoms])
+    dihedrals = md.compute_dihedrals(traj, indices)
+#    print(dihedrals)
+    trans_di = np.transpose(dihedrals)
+#    print(trans_di)
+    plt.scatter(trans_di[0],trans_di[1])
+    plt.savefig("/output/tempplot")
+    centroids, labels = kmeans2(dihedrals,4,iter=100)
+    return labels
+
 if __name__ == "__main__":
 
     task = int(sys.argv[1])
@@ -126,6 +143,11 @@ if __name__ == "__main__":
         # cluster the sequences
         traj = dr.load_traj(protein)
         labels = seq_cluster(traj,seq_size,sliding,num_states)
+
+    elif task==4:
+        # use 2 dihedrals to label alanine dipeptide
+        traj = dr.load_traj(protein)
+        labels = label_alanine(traj)
 
 # count the number of each label from 0 to K
     print labels

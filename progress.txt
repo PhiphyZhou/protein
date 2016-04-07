@@ -2,6 +2,8 @@
 To Do(*): 
 
 * Study with Alanine data:
+  * Generate 1 micro-second span of alanine data
+  * label alanine data using dihedral angles
   * What clustering method makes more sense 
     (hierarchical using rmsd,k-means on coords, PCA...)
   * Is sequence clustering consistant with frame clustering in representing state and transition?
@@ -11,9 +13,9 @@ To Do(*):
   * compare classification using PCA and encoder on 100 files
 	
 * Go parallel
-  * learn to adjust number of threads in tensorflow
+  * learn to use distributed tensorflow
   * assign nodes for training on damsl or Marcc
-  * reading data in parallel
+  * preprocessing data in parallel (randomize before learning iterations)
 
 * Basic rnn on trajectory data for predicting the next frame 
   (adapted from Tensorflow ptb model)
