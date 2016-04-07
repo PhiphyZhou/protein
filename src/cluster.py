@@ -115,6 +115,8 @@ def label_alanine(traj):
     trans_di = np.transpose(dihedrals)
 #    print(trans_di)
     plt.scatter(trans_di[0],trans_di[1])
+    plt.xlabel('psi')
+    plt.ylabel('phi')
     plt.savefig("/output/tempplot")
     centroids, labels = kmeans2(dihedrals,4,iter=100)
     return labels
