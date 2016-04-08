@@ -13,7 +13,8 @@ To Do(*):
   * compare classification using PCA and encoder on 100 files
 	
 * Go parallel
-  * learn to use distributed tensorflow
+  - install distributed tensorflow in container
+  * modify code to use distributed tensorflow
   * assign nodes for training on damsl or Marcc
   * preprocessing data in parallel (randomize before learning iterations)
 

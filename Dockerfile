@@ -11,6 +11,7 @@ RUN pip install nose
 RUN pip install mdtraj
 RUN pip install --user MDAnalysis MDAnalysisTests
 RUN pip install -U scikit-learn
+RUN apt-get install -y git
 
 VOLUME /output
 
