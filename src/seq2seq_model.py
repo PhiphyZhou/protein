@@ -421,7 +421,9 @@ def seq2seq_f(cell, encoder_inputs, decoder_inputs, loop_output):
 #            for x in outputs:
 #                x = tf.tanh(x)
 #  print(states)
-    return outputs,states[-1]
+    
+    # the output states is just the last element of all hidden states
+    return outputs,states
 
 
 def square_loss(outputs, targets):
