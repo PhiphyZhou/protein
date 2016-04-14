@@ -2,18 +2,24 @@
 To Do(*): 
 
 * Study with Alanine data:
-  * Generate 1 micro-second span of alanine data
-  * label alanine data using dihedral angles
+  - Generate 1 micro-second span of alanine data (only got less than 1/20)
+  - label alanine data using dihedral angles
+  * Generate more simulation starting from rare state seeds
   * What clustering method makes more sense 
     (hierarchical using rmsd,k-means on coords, PCA...)
+    - Option 1: use k-means with given initial centers
+    * Option 2: GMM or membership function
+  * How to label transition states from the phi-psi distribution?
+    (need to use GMM or membership function?)
   * Is sequence clustering consistant with frame clustering in representing state and transition?
-
+    
 * Do classification on bpti data
   * do clustering with rmsd to generate labels on 100 files (each 40)
   * compare classification using PCA and encoder on 100 files
 	
 * Go parallel
   - install distributed tensorflow in container
+  * write simple distributed TF for testing
   * modify code to use distributed tensorflow
   * assign nodes for training on damsl or Marcc
   * preprocessing data in parallel (randomize before learning iterations)

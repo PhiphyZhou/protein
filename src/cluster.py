@@ -120,10 +120,34 @@ def label_alanine(traj):
     plt.ylabel('psi')
     plt.savefig("/output/tempplot")
 
+    # deal with the periodical condition: manually put same cluster together
+    def shift_phi(x):
+        if x>2.2:
+            return -2*np.pi+x
+        else: 
+            return x
+    def shift_psi(x):
+        if x<-2.2:
+            return 2*np.pi+x 
+        else:
+            return x
+    dihedrals_shift = np.asarray(
+                [np.vectorize(shift_phi)(trans_di[0]),
+                 np.vectorize(shift_psi)(trans_di[1])]) 
+#    print(trans_di)
+    plt.scatter(dihedrals_shift[0],dihedrals_shift[1])
+    plt.xlabel('phi')
+    plt.ylabel('psi')
+    plt.savefig("/output/tempplot1")
+    print(dihedrals.shape)
+    print(dihedrals_shift.shape)
+   
     # do clustering with given initial centers
     centers = np.array([[55,48],[-77,138],[-77, -39],[60, -72]])*np.pi/180.0
     clu = kmeans(n_clusters=4,init=centers)
-    labels = clu.fit_predict(dihedrals)
+    labels = clu.fit_predict(np.transpose(dihedrals_shift))
+    print("centers:")
+    print(clu.cluster_centers_*180.0/np.pi)
     return labels
 
 if __name__ == "__main__":
@@ -139,7 +163,7 @@ if __name__ == "__main__":
             pickle.dump(labels,lb)
 
     elif task==2:
-        # read the label file
+        # read the label file and get the indices of one cluster
 #        with open("/output/"+protein+"/labels"+suffix,"r") as lb:
         with open("/protein/data/"+protein+"-labels"+suffix) as lb:
             labels = pickle.load(lb)
