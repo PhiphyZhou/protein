@@ -115,10 +115,10 @@ def label_alanine(traj):
 #    print(dihedrals)
     trans_di = np.transpose(dihedrals)
 #    print(trans_di)
-    plt.scatter(trans_di[0],trans_di[1])
-    plt.xlabel('phi')
-    plt.ylabel('psi')
-    plt.savefig("/output/tempplot")
+#    plt.scatter(trans_di[0],trans_di[1])
+#    plt.xlabel('phi')
+#    plt.ylabel('psi')
+#    plt.savefig("/output/tempplot")
 
     # deal with the periodical condition: manually put same cluster together
     def shift_phi(x):
