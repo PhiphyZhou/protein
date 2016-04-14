@@ -11,7 +11,7 @@ cluster
 '''
 ## Data selection ##
 protein = "alanine"
-suffix = "-1000" # alanine file suffix for number of samples
+suffix = "-micsec" # alanine file suffix for number of samples
 
 #protein = "bpti"
 num_files = 4000 # number of dcd files we want to analyze, for bpti data 
