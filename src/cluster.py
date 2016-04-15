@@ -145,7 +145,8 @@ def label_alanine(traj):
     # do clustering with given initial centers
     centers = np.array([[55,48],[-77,138],[-77, -39],[60, -72]])*np.pi/180.0
     clu = kmeans(n_clusters=4,init=centers)
-    labels = clu.fit_predict(np.transpose(dihedrals_shift))
+    labels = clu.fit_predict(dihedrals)
+#    labels = clu.fit_predict(np.transpose(dihedrals_shift))
     print("centers:")
     print(clu.cluster_centers_*180.0/np.pi)
     return labels

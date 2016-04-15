@@ -2,7 +2,27 @@
 
 <mdtraj.Trajectory with 49853 frames, 22 atoms, 1 residues, and unitcells>
 Trajectory is smoothed by filter with window size 10
-/usr/local/lib/python2.7/dist-packages/sklearn/cluster/k_means_.py:821: RuntimeWarning: Explicit initial center position passed: performing only one init in k-means instead of n_init=10
-  n_jobs=self.n_jobs)
-  [2 2 2 ..., 2 2 2]
-  [  579 21574 27446   254]
+
+Given initial centers:
+[[55,48],[-77,138],[-77, -39],[60, -72]]
+
+Using original phi-psi distribution:  
+  centers:
+  [[ 119.8449139    89.14287362]
+   [-119.45114972  128.24288484]
+   [-108.05597126  -34.4980452 ]
+   [ 106.74343053  -86.94867455]]
+     
+   sample # for each label: 
+   [  579 21574 27446   254]
+    
+Using shifted data: 
+  centers:
+  [[  69.69121323   77.03361598]
+   [-120.5920531   136.18875504]
+   [-107.69327385  -23.75030507]
+   [  75.40664337  -65.88682641]]
+  
+  sample # for each label:
+   [  339 22690 26685   139]
+  

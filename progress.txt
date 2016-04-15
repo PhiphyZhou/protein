@@ -4,6 +4,7 @@ To Do(*):
 * Study with Alanine data:
   - Generate 1 micro-second span of alanine data (only got less than 1/20)
   - label alanine data using dihedral angles
+  * deal with periodical condition. (need to manually draw lines?)
   * Generate more simulation starting from rare state seeds
   * What clustering method makes more sense 
     (hierarchical using rmsd,k-means on coords, PCA...)
