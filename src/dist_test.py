@@ -12,8 +12,8 @@ cluster_dict = {"ps": ["localhost:2222", "localhost:2223"],
 server = tf.train.Server.create_local_server()
 cluster = tf.train.ClusterSpec(cluster_dict)
 
-server1 = tf.train.Server(cluster, job_name="ps", task_index=0)
-server2 = tf.train.Server(cluster, job_name="worker", task_index=1)
+server1 = tf.train.Server(cluster.as_cluster_def(), job_name="ps", task_index=0)
+server2 = tf.train.Server(cluster.as_cluster_def(), job_name="worker", task_index=1)
 
 
 

@@ -111,14 +111,14 @@ def label_alanine(traj):
     psi_atoms = [6,8,14,16]
     phi_atoms = [4,6,8,14]
     indices = np.asarray([phi_atoms,psi_atoms])
-    dihedrals = md.compute_dihedrals(traj, indices)
+    dihedrals = md.compute_dihedrals(traj,indices,periodic=False)
 #    print(dihedrals)
     trans_di = np.transpose(dihedrals)
 #    print(trans_di)
-#    plt.scatter(trans_di[0],trans_di[1])
-#    plt.xlabel('phi')
-#    plt.ylabel('psi')
-#    plt.savefig("/output/tempplot")
+    plt.scatter(trans_di[0],trans_di[1])
+    plt.xlabel('phi')
+    plt.ylabel('psi')
+    plt.savefig("/output/tempplot")
 
     # deal with the periodical condition: manually put same cluster together
     def shift_phi(x):
@@ -135,6 +135,7 @@ def label_alanine(traj):
                 [np.vectorize(shift_phi)(trans_di[0]),
                  np.vectorize(shift_psi)(trans_di[1])]) 
 #    print(trans_di)
+    plt.figure()
     plt.scatter(dihedrals_shift[0],dihedrals_shift[1])
     plt.xlabel('phi')
     plt.ylabel('psi')
