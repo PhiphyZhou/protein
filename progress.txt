@@ -4,14 +4,15 @@ To Do(*):
 * Study with Alanine data:
   - Generate 1 micro-second span of alanine data (only got less than 1/20)
   - label alanine data using dihedral angles
-  * deal with periodical condition. (need to manually draw lines?)
+  * deal with periodical condition.
+    modify distance function in clustering algorithm considering periodical conditions
   * Generate more simulation starting from rare state seeds
   * What clustering method makes more sense 
     (hierarchical using rmsd,k-means on coords, PCA...)
     - Option 1: use k-means with given initial centers
     * Option 2: GMM or membership function
-  * How to label transition states from the phi-psi distribution?
-    (need to use GMM or membership function?)
+  * label transition states from the phi-psi distribution.
+    (use label changing in the sequence of labels)
   * Is sequence clustering consistant with frame clustering in representing state and transition?
     
 * Do classification on bpti data
@@ -21,6 +22,7 @@ To Do(*):
 * Go parallel
   - install distributed tensorflow in container
   * write simple distributed TF for testing
+    * Deal with "different devices" error 
   * modify code to use distributed tensorflow
   * assign nodes for training on damsl or Marcc
   * preprocessing data in parallel (randomize before learning iterations)

@@ -111,7 +111,7 @@ def label_alanine(traj):
     psi_atoms = [6,8,14,16]
     phi_atoms = [4,6,8,14]
     indices = np.asarray([phi_atoms,psi_atoms])
-    dihedrals = md.compute_dihedrals(traj,indices,periodic=False)
+    dihedrals = md.compute_dihedrals(traj,indices)
 #    print(dihedrals)
     trans_di = np.transpose(dihedrals)
 #    print(trans_di)
@@ -146,8 +146,9 @@ def label_alanine(traj):
     # do clustering with given initial centers
     centers = np.array([[55,48],[-77,138],[-77, -39],[60, -72]])*np.pi/180.0
     clu = kmeans(n_clusters=4,init=centers)
-    labels = clu.fit_predict(dihedrals)
-#    labels = clu.fit_predict(np.transpose(dihedrals_shift))
+#    labels = clu.fit_predict(dihedrals)
+    labels = clu.fit_predict(np.transpose(dihedrals_shift))
+    labels = 
     print("centers:")
     print(clu.cluster_centers_*180.0/np.pi)
     return labels
